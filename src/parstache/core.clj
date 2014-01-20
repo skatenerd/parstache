@@ -1,10 +1,9 @@
 (ns parstache.core
-  (:require [instaparse.core :as instaparse]))
+  (:require
+    [instaparse.core :as instaparse]))
 
-(defn foo
-  "I don't do a whole lot."
-  [x]
-  (println x "Hello, World!"))
+(declare render)
+
 
 (def ebnf
   "DOCUMENT := (RAW | SUBSTITUTION | SUBCONTEXT)+
@@ -16,3 +15,29 @@
 
 (def parse (instaparse/parser ebnf))
 
+(defn raw? [subdocument]
+  (= (first subdocument) :RAW))
+
+(defn render-subcontext [children data]
+  (let [key-name (last (last (first children)))
+        body (second children)
+        subdata (get data key-name)]
+    (map #(render body %) subdata)))
+
+(defn render [document data]
+  (if (nil? document)
+    "NONONONO"
+    (let [type (first document)
+          stuff (rest document)]
+      (cond
+        (= :DOCUMENT type)
+        (apply str (apply concat (map #(render % data) stuff)))
+        (= :RAW type)
+        (first stuff)
+        (= :SUBSTITUTION type)
+        (let [key (last (first stuff))]
+          (get data key))
+        (= :SUBCONTEXT type)
+        (render-subcontext stuff data)
+        :else
+        (recur (first stuff) {})))))
