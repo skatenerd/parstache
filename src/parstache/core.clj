@@ -2,7 +2,7 @@
   (:require
     [instaparse.core :as instaparse]))
 
-(declare render)
+(declare render-parsed)
 
 
 (def ebnf
@@ -22,22 +22,24 @@
   (let [key-name (last (last (first children)))
         body (second children)
         subdata (get data key-name)]
-    (map #(render body %) subdata)))
+    (map #(render-parsed body %) subdata)))
+
+(defn- render-parsed [parsed data]
+  (let [type (first parsed)
+        children (rest parsed)]
+    (cond
+      (= :DOCUMENT type)
+      (apply str (apply concat (map #(render-parsed % data) children)))
+      (= :RAW type)
+      (first children)
+      (= :SUBSTITUTION type)
+      (let [key (last (first children))]
+        (get data key))
+      (= :SUBCONTEXT type)
+      (render-subcontext children data)
+      :else
+      (recur (first children) {}))))
 
 (defn render [document data]
-  (if (nil? document)
-    "NONONONO"
-    (let [type (first document)
-          stuff (rest document)]
-      (cond
-        (= :DOCUMENT type)
-        (apply str (apply concat (map #(render % data) stuff)))
-        (= :RAW type)
-        (first stuff)
-        (= :SUBSTITUTION type)
-        (let [key (last (first stuff))]
-          (get data key))
-        (= :SUBCONTEXT type)
-        (render-subcontext stuff data)
-        :else
-        (recur (first stuff) {})))))
+  (render-parsed (parse document) data)
+  )
