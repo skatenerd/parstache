@@ -27,19 +27,17 @@
 (defn- render-parsed [parsed data]
   (let [type (first parsed)
         children (rest parsed)]
-    (cond
-      (= :DOCUMENT type)
+    (case type
+      :DOCUMENT
       (apply str (apply concat (map #(render-parsed % data) children)))
-      (= :RAW type)
+      :RAW
       (first children)
-      (= :SUBSTITUTION type)
+      :SUBSTITUTION
       (let [key (last (first children))]
         (get data key))
-      (= :SUBCONTEXT type)
+      :SUBCONTEXT
       (render-subcontext children data)
-      :else
       (recur (first children) {}))))
 
 (defn render [document data]
-  (render-parsed (parse document) data)
-  )
+  (render-parsed (parse document) data))
