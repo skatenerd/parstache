@@ -1,6 +1,7 @@
 (ns parstache.core
   (:require
-    [instaparse.core :as instaparse]))
+    [instaparse.core :as instaparse]
+    [clojure.walk    :as walk]))
 
 (declare render-parsed)
 
@@ -16,7 +17,7 @@
 (def parse (instaparse/parser ebnf))
 
 (defn render-subcontext [children data]
-  (let [key-name (last (last (first children)))
+  (let [key-name (keyword (last (last (first children))))
         body (second children)
         subdata (get data key-name)]
     (cond
@@ -27,7 +28,8 @@
 
 (defn- render-parsed [parsed data]
   (let [type (first parsed)
-        children (rest parsed)]
+        children (rest parsed)
+        data  (walk/keywordize-keys data)]
     (case type
       :DOCUMENT
       (apply str (apply concat (map #(render-parsed % data) children)))
@@ -35,7 +37,7 @@
       (first children)
       :SUBSTITUTION
       (let [key (last (first children))]
-        (get data key))
+        (get data (keyword key)))
       :SUBCONTEXT
       (render-subcontext children data)
       (recur (first children) {}))))

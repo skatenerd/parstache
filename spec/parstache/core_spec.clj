@@ -46,6 +46,12 @@
       "hello Joe, how are you doing?  i am doing well"
       (render "hello {{name}}, how are you doing?  i am doing {{status}}" {"name" "Joe" "status" "well"})))
 
+  (it "supports keywordized data"
+    (should=
+      "hello Joe, how are you doing?  i am doing well"
+      (render "hello {{name}}, how are you doing?  i am doing {{status}}" {:name "Joe" :status "well"}))
+    )
+
   (it "loops over collections"
     (should=
       "hello, james, frank"
