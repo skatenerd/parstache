@@ -15,9 +15,6 @@
 
 (def parse (instaparse/parser ebnf))
 
-(defn raw? [subdocument]
-  (= (first subdocument) :RAW))
-
 (defn render-subcontext [children data]
   (let [key-name (last (last (first children)))
         body (second children)
