@@ -67,6 +67,17 @@
   (it "makes fake conditionals, thereby implementing logic in the view, so mustache is really basically pointless"
     (should=
       "i have a son, jeremy"
-      (render "i have a {{#son}}son, {{name}}{{/son}}{{#daughter}}daughter, {{name}}{{/daughter}}" {"son" {"name" "jeremy"}}))))
+      (render "i have a {{#son}}son, {{name}}{{/son}}{{#daughter}}daughter, {{name}}{{/daughter}}" {"son" {"name" "jeremy"}})))
+
+  (it "renders with partials"
+    (should=
+      "yo, do you want to hear about my kid?  sweet!  his name is joe"
+      (render "yo, do you want to hear about my kid?  sweet!  {{#kid}}{{>kidpartial}}{{/kid}}" {"kid" {"name" "joe"}} {"kidpartial" "his name is {{name}}"})
+      )
+    )
+  (it "supports keywordized partial names"
+    (should=
+      "yo, do you want to hear about my kid?  sweet!  his name is joe"
+      (render "yo, do you want to hear about my kid?  sweet!  {{#kid}}{{>kidpartial}}{{/kid}}" {"kid" {"name" "joe"}} {:kidpartial "his name is {{name}}"}))))
 
 
