@@ -58,7 +58,9 @@
                                                                                                                       "children" [{"name" "logan"} {"name" "katie"}]}
                                                                                                                      {"name" "linda"
                                                                                                                       "children" [{"name" "rutledge"} {"name" "walter"}]}]})))
-
-  )
+  (it "makes fake conditionals, thereby implementing logic in the view, so mustache is really basically pointless"
+    (should=
+      "i have a son, jeremy"
+      (render "i have a {{#son}}son, {{name}}{{/son}}{{#daughter}}daughter, {{name}}{{/daughter}}" {"son" {"name" "jeremy"}}))))
 
 

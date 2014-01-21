@@ -19,7 +19,11 @@
   (let [key-name (last (last (first children)))
         body (second children)
         subdata (get data key-name)]
-    (map #(render-parsed body %) subdata)))
+    (cond
+      (sequential? subdata)
+      (map #(render-parsed body %) subdata)
+      subdata
+      (render-parsed body subdata))))
 
 (defn- render-parsed [parsed data]
   (let [type (first parsed)
