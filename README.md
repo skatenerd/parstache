@@ -1,10 +1,26 @@
 # parstache
 
-A Clojure library designed to ... well, that part is up to you.
+An implementation of Mustache Templates using EBNF
 
 ## Usage
+```
+ (render
+   "immediate families are:  {{#parents}}{{name}}: {{#children}}{{name}} {{/children}}{{/parents}}"
+   {"parents" [{"name" "laura" "children" [{"name" "logan"} {"name" "katie"}]}
+               {"name" "linda" "children" [{"name" "rutledge"} {"name" "walter"}]}]})
 
-FIXME
+```
+
+Will Yield:
+```
+ "immediate families are:  laura: logan katie linda: rutledge walter "
+```
+
+## Missing Features
+*  HTML Escaping
+*  HTML Unescaping
+*  Inverted Sections
+*  Lambdas
 
 ## License
 
