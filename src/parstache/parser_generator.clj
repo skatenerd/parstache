@@ -1,30 +1,41 @@
 (ns parstache.parser-generator
   (:require [parstache.tree :refer :all]))
 
+(declare add-to-tree)
+
 (defn new-last-element [v new-element]
   (assoc-in v [(dec (count v))] new-element))
 
+(defn add-immediate-children [intermediate-parse-tree legally-addable-children]
+  (map
+    (fn [to-add] (update-in
+                   intermediate-parse-tree
+                   [:children]
+                   #(conj % to-add)))
+    (legally-addable-children intermediate-parse-tree)))
+
+(defn possible-new-subtrees [intermediate-parse-tree legally-addable-children]
+  (let [last-child (last (:children intermediate-parse-tree))]
+    (if last-child
+      (add-to-tree last-child legally-addable-children)
+      [])))
+
+(defn update-last-child [intermediate-parse-tree new-child]
+  (assoc-in
+    intermediate-parse-tree
+    [:children (dec (count (:children intermediate-parse-tree)))]
+    new-child))
+
+(defn with-altered-subtree [intermediate-parse-tree legally-addable-children]
+  (map #(update-last-child intermediate-parse-tree %)
+       (possible-new-subtrees intermediate-parse-tree legally-addable-children)))
+
 (defn add-to-tree [intermediate-parse-tree legally-addable-children]
-  (let [can-add-here
-        (legally-addable-children intermediate-parse-tree)
-        with-immediate-adds
-        (map
-          (fn [to-add] (update-in
-                         intermediate-parse-tree
-                         [:children]
-                         #(conj % to-add)))
-          can-add-here)
-        subtree-stuff
-        (if (empty? (:children intermediate-parse-tree))
-         []
-         (add-to-tree (last (:children intermediate-parse-tree)) legally-addable-children))
-        with-updated-last-child
-        (map #(assoc-in
-                intermediate-parse-tree
-                [:children (dec (count (:children intermediate-parse-tree)))]
-                %) subtree-stuff)
-        ]
-    (concat with-updated-last-child with-immediate-adds)))
+  (let [with-immediate-adds
+        (add-immediate-children intermediate-parse-tree legally-addable-children)
+        with-altered-subtree
+        (with-altered-subtree intermediate-parse-tree legally-addable-children)]
+    (concat with-altered-subtree with-immediate-adds)))
 
 
 ;(defn generate-parser [rules]
