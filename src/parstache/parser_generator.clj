@@ -41,7 +41,7 @@
   (into {} (map (fn [[key val]] [key (assoc val :name key)]) rules)))
 
 (defn build-empty-node [rule-name rules]
-  (assoc (get rules rule-name) :children []))
+  (assoc (get rules rule-name) :children [] :name rule-name))
 
 (defn addable-to-juxtaposition [rules rule node]
   (let [wants (get rule :children)
@@ -59,18 +59,20 @@
     [(build-empty-node (first wants) rules)]))
 
 (defn addable-children [remaining-program rules node]
-  (let [rules (rules-with-metadata rules)
-        rule (get rules (:name node))
-        last-child-closeable? (closeable? rules (last (:children node)))]
-    (if last-child-closeable?
-      (case (:type rule)
-        :juxtaposition
-        (addable-to-juxtaposition rules rule node)
-        :character
-        (addable-to-character remaining-program rules rule node)
-        :repetition
-        (addable-to-repetition rules rule node))
-      [])))
+  (if (map? node)
+    (let [rules (rules-with-metadata rules)
+          rule (get rules (:name node))
+          last-child-closeable? (closeable? rules (last (:children node)))]
+      (if last-child-closeable?
+        (case (:type rule)
+          :juxtaposition
+          (addable-to-juxtaposition rules rule node)
+          :character
+          (addable-to-character remaining-program rules rule node)
+          :repetition
+          (addable-to-repetition rules rule node))
+        []))
+    []))
 
 (defn juxtaposition-closeable? [rule node]
   (let [child-names (map :name (:children node))]
@@ -91,3 +93,16 @@
                          true)]
       (and local-answer (recur rules (last (:children node)))))
     true))
+
+(defn get-parse-trees [rules program]
+  (find-all
+    (fn [state]
+      (empty? (:remaining-program state)));predicate
+    (fn [state]
+      (let [what-to-add (fn [tree] (addable-children (:remaining-program state) rules tree))
+            reachable-trees (add-to-tree (:tree state) what-to-add)]
+        (map (fn [reachable]
+               {:tree reachable
+                :remaining-program (apply str (rest (:remaining-program state)))})
+             reachable-trees)))
+    {:remaining-program program :tree (build-empty-node :root rules)}))

@@ -90,7 +90,7 @@
     (should
       (closeable?
         {:root {:type :repetition :children [:wat]}}
-        {:name :root :type :repetiition :children []})))
+        {:name :root :type :repetition :children []})))
   (it "nil is always closeable"
     (should
       (closeable? {} nil)))
@@ -100,3 +100,22 @@
         {:root {:type :juxtaposition :children [:char-rule]}
          :char-rule {:type :character :children ["Z"]}}
         {:name :root :type :juxtaposition :children [{:name :char-rule :type :character :children []}]}))))
+
+(describe "integration"
+  (it "...works?"
+    (let [rules {:root {:type :juxtaposition :children [:a-char :b-char :repeat-root :a-char]}
+                 :a-char {:type :character :children ["a"]}
+                 :b-char {:type :character :children ["b"]}
+                 :repeat-root {:type :repetition :children [:root]}}
+          program "aabbaabbaa"]
+      (should-not (empty? (get-parse-trees rules program))))))
+
+
+
+;  "R=A B R* A
+;  AC = 'a'
+;  A = AC+
+;  BC='b'
+;  B=BC+")
+;(prn (fakeparse "aabbaabbaa"))
+
