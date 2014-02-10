@@ -23,6 +23,7 @@
       (should=
         [{:name :middle :type :character :children []}]
         (addable-children
+          ""
           rules
           {:name :root :type :juxtaposition :children [{:name :first :type :character :children ["a"]}]}))))
 
@@ -31,6 +32,13 @@
       (should=
         ["a"]
         (addable-children
+          "a"
+          rules
+          {:name :root :type :character :children []}))
+      (should=
+        []
+        (addable-children
+          "this program does not have an 'a' at the start"
           rules
           {:name :root :type :character :children []}))))
 
@@ -40,6 +48,7 @@
       (should=
         [{:name :char-rule :type :character :children []}]
         (addable-children
+          ""
           rules
           {:name :root :type :repetition :children [{:name :char-rule :type :character :children ["Z"]}]}))))
 
@@ -49,6 +58,7 @@
       (should=
         []
         (addable-children
+          ""
           rules
           {:name :root :type :repetition :children [{:name :char-rule :type :character :children []}]})))
     )

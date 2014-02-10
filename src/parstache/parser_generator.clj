@@ -49,15 +49,16 @@
         next-up (nth wants (count has))]
     [(build-empty-node next-up rules)]))
 
-(defn addable-to-character [rules rule node]
-  (let [wants (get rule :children)]
-    wants))
+(defn addable-to-character [remaining-program rules rule node]
+  (let [wants (get rule :children)
+        first-program-character (first remaining-program)]
+    (filter #(= (first %) first-program-character) wants)))
 
 (defn addable-to-repetition [rules rule node]
   (let [wants (get rule :children)]
     [(build-empty-node (first wants) rules)]))
 
-(defn addable-children [rules node]
+(defn addable-children [remaining-program rules node]
   (let [rules (rules-with-metadata rules)
         rule (get rules (:name node))
         last-child-closeable? (closeable? rules (last (:children node)))]
@@ -66,7 +67,7 @@
         :juxtaposition
         (addable-to-juxtaposition rules rule node)
         :character
-        (addable-to-character rules rule node)
+        (addable-to-character remaining-program rules rule node)
         :repetition
         (addable-to-repetition rules rule node))
       [])))
