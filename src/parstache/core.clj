@@ -16,15 +16,6 @@
 
 (def parse (instaparse/parser ebnf))
 
-(def otherbnf
-  "R=A B R* A
-  AC = 'a'
-  A = AC+
-  BC='b'
-  B=BC+")
-(def fakeparse (instaparse/parser otherbnf))
-(prn (fakeparse "aabbaabbaa"))
-
 (defn- render-subcontext [children data partials]
   (let [key-name (last (last (first children)))
         body (second children)
