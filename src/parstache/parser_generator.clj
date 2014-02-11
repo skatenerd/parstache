@@ -45,9 +45,10 @@
 
 (defn addable-to-juxtaposition [rules rule node]
   (let [wants (get rule :children)
-        has (get node :children)
-        next-up (nth wants (count has))]
-    [(build-empty-node next-up rules)]))
+        has (get node :children)]
+    (if (= (count wants) (count has))
+      []
+      [(build-empty-node (nth wants (count has)) rules)])))
 
 (defn addable-to-character [remaining-program rules rule node]
   (let [wants (get rule :children)
@@ -94,6 +95,14 @@
       (and local-answer (recur rules (last (:children node)))))
     true))
 
+(defn string-leaves [tree]
+  (filter
+    string?
+    (tree-seq
+      map?
+      :children
+      tree)))
+
 (defn get-parse-trees [rules program]
   (find-all
     (fn [state]
@@ -103,6 +112,6 @@
             reachable-trees (add-to-tree (:tree state) what-to-add)]
         (map (fn [reachable]
                {:tree reachable
-                :remaining-program (apply str (rest (:remaining-program state)))})
+                :remaining-program (apply str (drop (count (string-leaves reachable)) program))})
              reachable-trees)))
     {:remaining-program program :tree (build-empty-node :root rules)}))
