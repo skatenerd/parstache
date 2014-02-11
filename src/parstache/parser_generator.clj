@@ -3,7 +3,7 @@
 
 (declare add-to-tree closeable?)
 
-(defn new-last-element [v new-element]
+(defn update-last-element [v new-element]
   (assoc-in v [(dec (count v))] new-element))
 
 (defn add-immediate-children [intermediate-parse-tree legally-addable-children]
@@ -21,10 +21,10 @@
       [])))
 
 (defn update-last-child [intermediate-parse-tree new-child]
-  (assoc-in
+  (update-in
     intermediate-parse-tree
-    [:children (dec (count (:children intermediate-parse-tree)))]
-    new-child))
+    [:children]
+    #(update-last-element % new-child)))
 
 (defn with-altered-subtree [intermediate-parse-tree legally-addable-children]
   (map #(update-last-child intermediate-parse-tree %)
@@ -113,12 +113,7 @@
     true))
 
 (defn string-leaves [tree]
-  (filter
-    string?
-    (tree-seq
-      map?
-      :children
-      tree)))
+  (filter string?  (tree-seq map? :children tree)))
 
 (defn get-parse-trees [rules program]
   (find-all
