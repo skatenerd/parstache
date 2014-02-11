@@ -53,7 +53,9 @@
 (defn addable-to-character [remaining-program rules rule node]
   (let [wants (get rule :children)
         first-program-character (first remaining-program)]
-    (filter #(= (first %) first-program-character) wants)))
+    (if (empty? (:children node))
+      (filter #(= (first %) first-program-character) wants)
+      [])))
 
 (defn addable-to-repetition [rules rule node]
   (let [wants (get rule :children)]
