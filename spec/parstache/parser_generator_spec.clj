@@ -108,6 +108,15 @@
       (closeable?
         {:root {:type :repetition :children [:wat]}}
         {:name :root :type :repetition :children []})))
+  (it "an exclusion rule is not closeable unless it has a child"
+    (should
+      (closeable?
+        {:root {:type :exclusion :children ["("]}}
+        {:name :root :type :exclusion :children ["Z"]}))
+    (should-not
+      (closeable?
+        {:root {:type :exclusion :children ["A"]}}
+        {:name :root :type :exclusion :children []})))
   (it "nil is always closeable"
     (should
       (closeable? {} nil)))
@@ -125,4 +134,23 @@
                  :b-char {:type :character :children ["b"]}
                  :repeat-root {:type :repetition :children [:root]}}
           program "abababa"]
-      (should-not (empty? (get-parse-trees rules program))))))
+      (should-not (empty? (get-parse-trees rules program)))))
+
+  (it "does lisp?"
+    (let [rules {:root {:type :juxtaposition :children [:open-paren
+                                                        :non-parens
+                                                        :repeat-root
+                                                        :non-parens
+                                                        :close-paren]}
+                 :open-paren {:type :character :children ["("]}
+                 :close-paren {:type :character :children [")"]}
+                 :repeat-root {:type :repetition :children [:root]}
+                 :non-paren {:type :exclusion :children ["(" ")"]}
+                 :non-parens {:type :repetition :children [:non-paren]}
+                 }
+          program "(+ 1 2 (* 5 3) 2)"]
+      ;(clojure.pprint/pprint (first (get-parse-trees rules program)))
+      (should-not (empty? (get-parse-trees rules program)))))
+
+
+  )

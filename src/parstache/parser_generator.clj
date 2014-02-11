@@ -94,6 +94,9 @@
 (defn character-closeable? [rule node]
   (not (empty? (:children node))))
 
+(defn exclusion-closeable? [rule node]
+  (not (empty? (:children node))))
+
 (defn closeable? [rules node]
   (if (map? node)
     (let [rule (get rules (:name node))
@@ -102,6 +105,8 @@
                          (juxtaposition-closeable? rule node)
                          :character
                          (character-closeable? rule node)
+                         :exclusion
+                         (exclusion-closeable? rule node)
                          :repetition
                          true)]
       (and local-answer (recur rules (last (:children node)))))
