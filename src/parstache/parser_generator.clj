@@ -57,6 +57,14 @@
       (filter #(= (first %) first-program-character) wants)
       [])))
 
+(defn addable-to-exclusion [remaining-program rules rule node]
+  (let [hates (set (get rule :children))
+        first-program-character (str (first remaining-program))]
+    (if (empty? (:children node))
+      (if (contains? hates first-program-character)
+        []
+        [first-program-character]))))
+
 (defn addable-to-repetition [rules rule node]
   (let [wants (get rule :children)]
     [(build-empty-node (first wants) rules)]))
@@ -73,7 +81,9 @@
           :character
           (addable-to-character remaining-program rules rule node)
           :repetition
-          (addable-to-repetition rules rule node))
+          (addable-to-repetition rules rule node)
+          :exclusion
+          (addable-to-exclusion remaining-program rules rule node))
         []))
     []))
 

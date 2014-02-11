@@ -46,9 +46,7 @@
         (addable-children
           "aaaaaaa"
           rules
-          {:name :root :type :character :children ["a"]}))
-
-      ))
+          {:name :root :type :character :children ["a"]}))))
 
   (it "knows about repetition rules"
     (let [rules {:root {:type :repetition :children [:char-rule]}
@@ -59,6 +57,21 @@
           ""
           rules
           {:name :root :type :repetition :children [{:name :char-rule :type :character :children ["Z"]}]}))))
+
+  (it "knows about exclusion rules"
+    (let [rules {:root {:type :exclusion :children ["("]}}]
+      (should=
+        ["z"]
+        (addable-children
+          "zoo"
+          rules
+          {:name :root :type :exclusion :children []}))
+      (should=
+        []
+        (addable-children
+          "(zoo"
+          rules
+          {:name :root :type :exclusion :children []}))))
 
   (it "wont let you add anything to a node whose last child is not closable"
     (let [rules {:root {:type :repetition :children [:char-rule]}
