@@ -4,7 +4,7 @@
     [speclj.core :refer :all]))
 
 (describe "add to parse tree"
-  (it "finds all additions according to whatever the legally-addable-children function says to do"
+  (xit "finds all additions according to whatever the legally-addable-children function says to do"
     (let [intermediate-parse-tree {:type :root :children [{:type :child :children ["HOWDY!"]}]}
           root intermediate-parse-tree
           child (first (:children intermediate-parse-tree))
@@ -136,7 +136,7 @@
           program "abababa"]
       (should-not (empty? (get-parse-trees rules program)))))
 
-  (it "does lisp?"
+  (it "does easy lisp"
     (let [rules {:root {:type :juxtaposition :children [:open-paren
                                                         :non-parens
                                                         :repeat-root
@@ -148,6 +148,24 @@
                  :non-paren {:type :exclusion :children ["(" ")"]}
                  :non-parens {:type :repetition :children [:non-paren]}
                  }
-          program "(+ 1 2 (* 5 3) 2)"]
-      (clojure.pprint/pprint (first (get-parse-trees rules program)))
-      (should-not (empty? (get-parse-trees rules program))))))
+          program "(+ 1 2)"]
+      ;(clojure.pprint/pprint (first (get-parse-trees rules program)))
+      (should-not (empty? (get-parse-trees rules program)))))
+
+  (it "does harder lisp"
+    (let [rules {:root {:type :juxtaposition :children [:open-paren
+                                                        :non-parens
+                                                        :repeat-root
+                                                        :non-parens
+                                                        :close-paren]}
+                 :open-paren {:type :character :children ["("]}
+                 :close-paren {:type :character :children [")"]}
+                 :repeat-root {:type :repetition :children [:root]}
+                 :non-paren {:type :exclusion :children ["(" ")"]}
+                 :non-parens {:type :repetition :children [:non-paren]}
+                 }
+          program "(+ 1 2 (* 3 4))"]
+      ;(clojure.pprint/pprint (first (get-parse-trees rules program)))
+      (should-not (empty? (get-parse-trees rules program)))))
+
+  )

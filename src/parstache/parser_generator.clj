@@ -1,6 +1,8 @@
 (ns parstache.parser-generator
   (:require [parstache.tree :refer :all]))
 
+(def debug (atom false))
+
 (defprotocol Rule
   (r-closeable? [this node])
   (r-addable-children [this node all-rules remaining-program]))
@@ -18,10 +20,10 @@
                    #(conj % to-add)))
     (legally-addable-children intermediate-parse-tree)))
 
-(defn possible-new-subtrees [intermediate-parse-tree legally-addable-children]
+(defn possible-new-subtrees [intermediate-parse-tree legally-addable-children rules]
   (let [last-child (last (:children intermediate-parse-tree))]
     (if last-child
-      (add-to-tree last-child legally-addable-children)
+      (add-to-tree last-child legally-addable-children rules)
       [])))
 
 (defn update-last-child [intermediate-parse-tree new-child]
@@ -30,15 +32,16 @@
     [:children]
     #(update-last-element % new-child)))
 
-(defn with-altered-subtree [intermediate-parse-tree legally-addable-children]
-  (map #(update-last-child intermediate-parse-tree %)
-       (possible-new-subtrees intermediate-parse-tree legally-addable-children)))
+(defn with-altered-subtree [intermediate-parse-tree legally-addable-children rules]
+  (let [new-subtrees (possible-new-subtrees intermediate-parse-tree legally-addable-children rules)]
+    (map #(update-last-child intermediate-parse-tree %)
+         new-subtrees)))
 
-(defn add-to-tree [intermediate-parse-tree legally-addable-children]
+(defn add-to-tree [intermediate-parse-tree legally-addable-children rules]
   (let [with-immediate-adds
         (add-immediate-children intermediate-parse-tree legally-addable-children)
         with-altered-subtree
-        (with-altered-subtree intermediate-parse-tree legally-addable-children)]
+        (with-altered-subtree intermediate-parse-tree legally-addable-children rules)]
     (concat with-altered-subtree with-immediate-adds)))
 
 (defn build-empty-node [rule-name rules]
@@ -47,9 +50,7 @@
 (defn addable-children [remaining-program rules node]
   (if (map? node)
     (let [{:keys [rule children]} node
-          last-child-closeable? (if (map? (last children))
-                                  (r-closeable? (:rule (last children)) (last children))
-                                  true)]
+          last-child-closeable? (closeable? rules (last children))]
       (if last-child-closeable?
         (r-addable-children rule node rules remaining-program)
         []))
@@ -71,7 +72,7 @@
       (empty? (:remaining-program state)));predicate
     (fn [state]
       (let [what-to-add (fn [tree] (addable-children (:remaining-program state) rules tree))
-            reachable-trees (add-to-tree (:tree state) what-to-add)]
+            reachable-trees (add-to-tree (:tree state) what-to-add rules)]
         (map (fn [reachable]
                {:tree reachable
                 :remaining-program (apply str (drop (count (string-leaves reachable)) program))})
@@ -81,7 +82,7 @@
 (defrecord Juxtaposition [name required-children]
   Rule
   (r-closeable? [this node]
-    (let [child-names (map :name (:children node))]
+    (let [child-names (map :name (map :rule (:children node)))]
       (= child-names required-children)))
   (r-addable-children [this node all-rules _]
     (let [has (:children node)]
