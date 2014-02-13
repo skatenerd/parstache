@@ -5,16 +5,17 @@
 
 (describe "what can i add to a node"
   (it "knows about juxtaposition rules"
-    (let [rules {:root {:type :juxtaposition :children [:first :middle]}
-                 :first {:type :character :children ["a"]}
-                 :middle {:type :character :children ["z"]}}]
+    (let [seed-rules {:root {:type :juxtaposition :children [:first :middle]}
+                      :first {:type :character :children ["a"]}
+                      :middle {:type :character :children ["z"]}}
+          rules (recordify-rules seed-rules)]
       (should=
-        [{:rule (build-rule-with-name :middle rules) :children []}]
+        [{:rule (get rules :middle) :children []}]
         (addable-children
           ""
           rules
-          {:rule (build-rule-with-name :root rules)
-           :children [{:rule (build-rule-with-name :first rules) :children ["a"]}]}))))
+          {:rule (get rules :root)
+           :children [{:rule (get rules :first) :children ["a"]}]}))))
 
   (it "knows about character rules"
     (let [rules {:root {:type :character :children ["a"]}}]
@@ -38,14 +39,16 @@
           {:rule (build-rule-with-name :root rules) :children ["a"]}))))
 
   (it "knows about repetition rules"
-    (let [rules {:root {:type :repetition :children [:char-rule]}
-                 :char-rule {:type :character :children ["Z"]}}]
+    (let [seed-rules {:root {:type :repetition :children [:char-rule]}
+                 :char-rule {:type :character :children ["Z"]}}
+          rules (recordify-rules seed-rules)
+          ]
       (should=
-        [{:rule (build-rule-with-name :char-rule rules) :children []}]
+        [{:rule (get rules :char-rule) :children []}]
         (addable-children
           ""
           rules
-          {:rule (build-rule-with-name :root rules) :children [{:rule (build-rule-with-name :char-rule rules) :children ["Z"]}]}))))
+          {:rule (get rules :root) :children [{:rule (get rules :char-rule) :children ["Z"]}]}))))
 
   (it "knows about exclusion rules"
     (let [rules {:root {:type :exclusion :children ["("]}}]

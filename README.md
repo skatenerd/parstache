@@ -22,6 +22,10 @@ Will Yield:
 *  Inverted Sections
 *  Lambdas
 
+## Parser Generator
+
+Todo:  experiment with using a closure to encapsulate "rules" and "remaining program".  extract rule records to own namespace.  support nested rules(!!!).  stop pointing nodes at rule records, instead give them rule names.
+
 ## License
 
 Copyright © 2014 FIXME

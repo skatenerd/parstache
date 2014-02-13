@@ -5,7 +5,7 @@
   (r-closeable? [this node])
   (r-addable-children [this node all-rules remaining-program]))
 
-(declare add-to-tree closeable? build-empty-node addable-children)
+(declare add-to-tree closeable? build-empty-node addable-children build-rule-with-name)
 
 (defn update-last-element [v new-element]
   (assoc-in v [(dec (count v))] new-element))
@@ -61,18 +61,21 @@
 (defn string-leaves [tree]
   (filter string?  (tree-seq map? :children tree)))
 
+(defn recordify-rules [rules]
+  (into {} (map (fn [[rule-name contents]] [rule-name (build-rule-with-name rule-name rules)]) rules)))
+
 (defn get-parse-tree [rules program]
-  (find-node
+  (let [rules (recordify-rules rules)]
+    (find-node
     (fn [state]
       (empty? (:remaining-program state)));predicate
     (fn [state]
-      (prn (:remaining-program state))
       (let [reachable-trees (add-to-tree (:tree state) (:remaining-program state) rules)]
         (map (fn [reachable]
                {:tree reachable
                 :remaining-program (apply str (drop (count (string-leaves reachable)) program))})
              reachable-trees)))
-    {:remaining-program program :tree (build-empty-node :root rules)}))
+    {:remaining-program program :tree (build-empty-node :root rules)})))
 
 (defrecord Juxtaposition [name required-children]
   Rule
@@ -129,4 +132,4 @@
 
 (defn build-empty-node [rule-name all-rules]
   {:children []
-   :rule (build-rule-with-name rule-name all-rules)})
+   :rule (get all-rules rule-name)})
