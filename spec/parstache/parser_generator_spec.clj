@@ -123,14 +123,15 @@
                  :b-char {:type :character :children ["b"]}
                  :repeat-root {:type :repetition :children [:root]}}
           program "abababa"]
-      (should-not (empty? (get-parse-trees rules program)))))
+      (should-not (empty? (get-parse-tree rules program)))))
 
   (it "does easy lisp"
     (let [rules {:root {:type :juxtaposition :children [:open-paren
                                                         :non-parens
                                                         :repeat-root
                                                         :non-parens
-                                                        :close-paren]}
+                                                        :close-paren
+                                                        :non-parens]}
                  :open-paren {:type :character :children ["("]}
                  :close-paren {:type :character :children [")"]}
                  :repeat-root {:type :repetition :children [:root]}
@@ -138,21 +139,22 @@
                  :non-parens {:type :repetition :children [:non-paren]}
                  }
           program "(+ 1 2)"]
-      (should-not (empty? (get-parse-trees rules program)))))
+      (should-not (empty? (get-parse-tree rules program)))))
 
   (it "does harder lisp"
     (let [rules {:root {:type :juxtaposition :children [:open-paren
                                                         :non-parens
                                                         :repeat-root
                                                         :non-parens
-                                                        :close-paren]}
+                                                        :close-paren
+                                                        :non-parens]}
                  :open-paren {:type :character :children ["("]}
                  :close-paren {:type :character :children [")"]}
                  :repeat-root {:type :repetition :children [:root]}
                  :non-paren {:type :exclusion :children ["(" ")"]}
                  :non-parens {:type :repetition :children [:non-paren]}
                  }
-          program "(+ 1  2 (* 3 4) 8 9)"]
-      (should-not (empty? (get-parse-trees rules program)))))
+          program "(+ 1 (* 3 4) (* 2 3))"]
+      (should-not (empty? (get-parse-tree rules program)))))
 
   )

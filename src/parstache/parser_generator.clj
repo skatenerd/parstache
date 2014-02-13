@@ -61,13 +61,13 @@
 (defn string-leaves [tree]
   (filter string?  (tree-seq map? :children tree)))
 
-(defn get-parse-trees [rules program]
-  (find-all
+(defn get-parse-tree [rules program]
+  (find-node
     (fn [state]
       (empty? (:remaining-program state)));predicate
     (fn [state]
-      (let [;what-to-add (fn [tree] (addable-children (:remaining-program state) rules tree))
-            reachable-trees (add-to-tree (:tree state) (:remaining-program state) rules)]
+      (prn (:remaining-program state))
+      (let [reachable-trees (add-to-tree (:tree state) (:remaining-program state) rules)]
         (map (fn [reachable]
                {:tree reachable
                 :remaining-program (apply str (drop (count (string-leaves reachable)) program))})
