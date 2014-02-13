@@ -1,8 +1,6 @@
 (ns parstache.parser-generator
   (:require [parstache.tree :refer :all]))
 
-(def debug (atom false))
-
 (defprotocol Rule
   (r-closeable? [this node])
   (r-addable-children [this node all-rules remaining-program]))
