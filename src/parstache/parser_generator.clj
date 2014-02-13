@@ -1,7 +1,11 @@
 (ns parstache.parser-generator
   (:require [parstache.tree :refer :all]))
 
-(declare add-to-tree closeable?)
+(defprotocol Rule
+  (r-closeable? [this node])
+  (r-addable-children [this node all-rules remaining-program]))
+
+(declare add-to-tree closeable? r-build-empty-node)
 
 (defn update-last-element [v new-element]
   (assoc-in v [(dec (count v))] new-element))
@@ -37,78 +41,24 @@
         (with-altered-subtree intermediate-parse-tree legally-addable-children)]
     (concat with-altered-subtree with-immediate-adds)))
 
-(defn rules-with-metadata [rules]
-  (into {} (map (fn [[key val]] [key (assoc val :name key)]) rules)))
-
 (defn build-empty-node [rule-name rules]
   (assoc (get rules rule-name) :children [] :name rule-name))
 
-(defn addable-to-juxtaposition [rules rule node]
-  (let [wants (get rule :children)
-        has (get node :children)]
-    (if (= (count wants) (count has))
-      []
-      [(build-empty-node (nth wants (count has)) rules)])))
-
-(defn addable-to-character [remaining-program rules rule node]
-  (let [wants (get rule :children)
-        first-program-character (first remaining-program)]
-    (if (empty? (:children node))
-      (filter #(= (first %) first-program-character) wants)
-      [])))
-
-(defn addable-to-exclusion [remaining-program rules rule node]
-  (let [hates (set (get rule :children))
-        first-program-character (str (first remaining-program))]
-    (if (empty? (:children node))
-      (if (contains? hates first-program-character)
-        []
-        [first-program-character]))))
-
-(defn addable-to-repetition [rules rule node]
-  (let [wants (get rule :children)]
-    [(build-empty-node (first wants) rules)]))
-
 (defn addable-children [remaining-program rules node]
   (if (map? node)
-    (let [rules (rules-with-metadata rules)
-          rule (get rules (:name node))
-          last-child-closeable? (closeable? rules (last (:children node)))]
+    (let [{:keys [rule children]} node
+          last-child-closeable? (if (map? (last children))
+                                  (r-closeable? (:rule (last children)) (last children))
+                                  true)]
       (if last-child-closeable?
-        (case (:type rule)
-          :juxtaposition
-          (addable-to-juxtaposition rules rule node)
-          :character
-          (addable-to-character remaining-program rules rule node)
-          :repetition
-          (addable-to-repetition rules rule node)
-          :exclusion
-          (addable-to-exclusion remaining-program rules rule node))
+        (r-addable-children rule node rules remaining-program)
         []))
     []))
 
-(defn juxtaposition-closeable? [rule node]
-  (let [child-names (map :name (:children node))]
-    (= child-names (:children rule))))
-
-(defn character-closeable? [rule node]
-  (not (empty? (:children node))))
-
-(defn exclusion-closeable? [rule node]
-  (not (empty? (:children node))))
-
 (defn closeable? [rules node]
   (if (map? node)
-    (let [rule (get rules (:name node))
-          local-answer (case (:type rule)
-                         :juxtaposition
-                         (juxtaposition-closeable? rule node)
-                         :character
-                         (character-closeable? rule node)
-                         :exclusion
-                         (exclusion-closeable? rule node)
-                         :repetition
-                         true)]
+    (let [{:keys [rule children]} node
+          local-answer (r-closeable? rule node)]
       (and local-answer (recur rules (last (:children node)))))
     true))
 
@@ -126,4 +76,61 @@
                {:tree reachable
                 :remaining-program (apply str (drop (count (string-leaves reachable)) program))})
              reachable-trees)))
-    {:remaining-program program :tree (build-empty-node :root rules)}))
+    {:remaining-program program :tree (r-build-empty-node :root rules)}))
+
+(defrecord Juxtaposition [name required-children]
+  Rule
+  (r-closeable? [this node]
+    (let [child-names (map :name (:children node))]
+      (= child-names required-children)))
+  (r-addable-children [this node all-rules _]
+    (let [has (:children node)]
+      (if (= (count required-children) (count has))
+        []
+        [(r-build-empty-node (nth required-children (count has)) all-rules)]))))
+
+(defrecord SingleCharacter [name possible-characters]
+  Rule
+  (r-closeable? [this node]
+    (not (empty? (:children node))))
+  (r-addable-children [this node all-rules remaining-program]
+    (let [first-program-character (str (first remaining-program))]
+      (if (empty? (:children node))
+        (filter #(= % first-program-character) possible-characters)
+        []))))
+
+(defrecord CharacterExclusion [name unpossible-characters]
+  Rule
+  (r-closeable? [this node]
+    (not (empty? (:children node))))
+  (r-addable-children [this node all-rules remaining-program]
+    (let [hates (set unpossible-characters)
+          first-program-character (str (first remaining-program))]
+    (if (empty? (:children node))
+      (if (contains? hates first-program-character)
+        []
+        [first-program-character])))))
+
+(defrecord Repetition [name repeated-rule-name]
+  Rule
+  (r-closeable? [this node]
+    true)
+  (r-addable-children [this node all-rules remaining-program]
+    [(r-build-empty-node (first repeated-rule-name) all-rules)]))
+
+(defn build-rule-with-name [rule-name all-rules]
+  (let [{:keys [type children]} (get all-rules rule-name)
+        constructor (case type
+                      :juxtaposition
+                      ->Juxtaposition
+                      :character
+                      ->SingleCharacter
+                      :exclusion
+                      ->CharacterExclusion
+                      :repetition
+                      ->Repetition)]
+    (constructor rule-name children)))
+
+(defn r-build-empty-node [rule-name all-rules]
+  {:children []
+   :rule (build-rule-with-name rule-name all-rules)})
