@@ -5,23 +5,23 @@
   (r-closeable? [this node])
   (r-addable-children [this node all-rules remaining-program]))
 
-(declare add-to-tree closeable? r-build-empty-node)
+(declare add-to-tree closeable? r-build-empty-node addable-children)
 
 (defn update-last-element [v new-element]
   (assoc-in v [(dec (count v))] new-element))
 
-(defn add-immediate-children [intermediate-parse-tree legally-addable-children]
+(defn add-immediate-children [intermediate-parse-tree remaining-program rules]
   (map
     (fn [to-add] (update-in
                    intermediate-parse-tree
                    [:children]
                    #(conj % to-add)))
-    (legally-addable-children intermediate-parse-tree)))
+    (addable-children remaining-program rules intermediate-parse-tree)))
 
-(defn possible-new-subtrees [intermediate-parse-tree legally-addable-children rules]
+(defn possible-new-subtrees [intermediate-parse-tree remaining-program rules]
   (let [last-child (last (:children intermediate-parse-tree))]
     (if last-child
-      (add-to-tree last-child legally-addable-children rules)
+      (add-to-tree last-child remaining-program rules)
       [])))
 
 (defn update-last-child [intermediate-parse-tree new-child]
@@ -30,20 +30,17 @@
     [:children]
     #(update-last-element % new-child)))
 
-(defn with-altered-subtree [intermediate-parse-tree legally-addable-children rules]
-  (let [new-subtrees (possible-new-subtrees intermediate-parse-tree legally-addable-children rules)]
+(defn with-altered-subtree [intermediate-parse-tree remaining-program rules]
+  (let [new-subtrees (possible-new-subtrees intermediate-parse-tree remaining-program rules)]
     (map #(update-last-child intermediate-parse-tree %)
          new-subtrees)))
 
-(defn add-to-tree [intermediate-parse-tree legally-addable-children rules]
+(defn add-to-tree [intermediate-parse-tree remaining-program rules]
   (let [with-immediate-adds
-        (add-immediate-children intermediate-parse-tree legally-addable-children)
+        (add-immediate-children intermediate-parse-tree remaining-program rules)
         with-altered-subtree
-        (with-altered-subtree intermediate-parse-tree legally-addable-children rules)]
+        (with-altered-subtree intermediate-parse-tree remaining-program rules)]
     (concat with-altered-subtree with-immediate-adds)))
-
-(defn build-empty-node [rule-name rules]
-  (assoc (get rules rule-name) :children [] :name rule-name))
 
 (defn addable-children [remaining-program rules node]
   (if (map? node)
@@ -69,8 +66,8 @@
     (fn [state]
       (empty? (:remaining-program state)));predicate
     (fn [state]
-      (let [what-to-add (fn [tree] (addable-children (:remaining-program state) rules tree))
-            reachable-trees (add-to-tree (:tree state) what-to-add rules)]
+      (let [;what-to-add (fn [tree] (addable-children (:remaining-program state) rules tree))
+            reachable-trees (add-to-tree (:tree state) (:remaining-program state) rules)]
         (map (fn [reachable]
                {:tree reachable
                 :remaining-program (apply str (drop (count (string-leaves reachable)) program))})
