@@ -5,7 +5,7 @@
   (r-closeable? [this node])
   (r-addable-children [this node all-rules remaining-program]))
 
-(declare add-to-tree closeable? r-build-empty-node addable-children)
+(declare add-to-tree closeable? build-empty-node addable-children)
 
 (defn update-last-element [v new-element]
   (assoc-in v [(dec (count v))] new-element))
@@ -72,7 +72,7 @@
                {:tree reachable
                 :remaining-program (apply str (drop (count (string-leaves reachable)) program))})
              reachable-trees)))
-    {:remaining-program program :tree (r-build-empty-node :root rules)}))
+    {:remaining-program program :tree (build-empty-node :root rules)}))
 
 (defrecord Juxtaposition [name required-children]
   Rule
@@ -83,7 +83,7 @@
     (let [has (:children node)]
       (if (= (count required-children) (count has))
         []
-        [(r-build-empty-node (nth required-children (count has)) all-rules)]))))
+        [(build-empty-node (nth required-children (count has)) all-rules)]))))
 
 (defrecord SingleCharacter [name possible-characters]
   Rule
@@ -112,7 +112,7 @@
   (r-closeable? [this node]
     true)
   (r-addable-children [this node all-rules remaining-program]
-    [(r-build-empty-node (first repeated-rule-name) all-rules)]))
+    [(build-empty-node (first repeated-rule-name) all-rules)]))
 
 (defn build-rule-with-name [rule-name all-rules]
   (let [{:keys [type children]} (get all-rules rule-name)
@@ -127,6 +127,6 @@
                       ->Repetition)]
     (constructor rule-name children)))
 
-(defn r-build-empty-node [rule-name all-rules]
+(defn build-empty-node [rule-name all-rules]
   {:children []
    :rule (build-rule-with-name rule-name all-rules)})
