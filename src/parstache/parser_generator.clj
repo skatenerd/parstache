@@ -1,11 +1,8 @@
 (ns parstache.parser-generator
-  (:require [parstache.tree :refer :all]))
+  (:require [parstache.tree :refer :all]
+            [parstache.parser-generator.node-types :refer :all]))
 
-(defprotocol Rule
-  (r-closeable? [this node])
-  (r-addable-children [this node all-rules remaining-program]))
-
-(declare add-to-tree closeable? build-empty-node addable-children build-rule-with-name)
+(declare add-to-tree closeable? addable-children build-rule-with-name)
 
 (defn update-last-element [v new-element]
   (assoc-in v [(dec (count v))] new-element))
@@ -77,46 +74,6 @@
              reachable-trees)))
     {:remaining-program program :tree (build-empty-node :root rules)})))
 
-(defrecord Juxtaposition [name required-children]
-  Rule
-  (r-closeable? [this node]
-    (let [child-names (map :name (map :rule (:children node)))]
-      (= child-names required-children)))
-  (r-addable-children [this node all-rules _]
-    (let [has (:children node)]
-      (if (= (count required-children) (count has))
-        []
-        [(build-empty-node (nth required-children (count has)) all-rules)]))))
-
-(defrecord SingleCharacter [name possible-characters]
-  Rule
-  (r-closeable? [this node]
-    (not (empty? (:children node))))
-  (r-addable-children [this node all-rules remaining-program]
-    (let [first-program-character (str (first remaining-program))]
-      (if (empty? (:children node))
-        (filter #(= % first-program-character) possible-characters)
-        []))))
-
-(defrecord CharacterExclusion [name unpossible-characters]
-  Rule
-  (r-closeable? [this node]
-    (not (empty? (:children node))))
-  (r-addable-children [this node all-rules remaining-program]
-    (let [hates (set unpossible-characters)
-          first-program-character (str (first remaining-program))]
-    (if (empty? (:children node))
-      (if (contains? hates first-program-character)
-        []
-        [first-program-character])))))
-
-(defrecord Repetition [name repeated-rule-name]
-  Rule
-  (r-closeable? [this node]
-    true)
-  (r-addable-children [this node all-rules remaining-program]
-    [(build-empty-node (first repeated-rule-name) all-rules)]))
-
 (defn build-rule-with-name [rule-name all-rules]
   (let [{:keys [type children]} (get all-rules rule-name)
         constructor (case type
@@ -130,6 +87,4 @@
                       ->Repetition)]
     (constructor rule-name children)))
 
-(defn build-empty-node [rule-name all-rules]
-  {:children []
-   :rule (get all-rules rule-name)})
+
