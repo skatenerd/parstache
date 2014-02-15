@@ -57,13 +57,10 @@
     (fn [state]
       (empty? (:remaining-program state)));predicate
     (fn [state]
+      ;(clojure.pprint/pprint state)
       (let [reachable-trees (add-to-tree (:tree state) (:remaining-program state) rules)]
         (map (fn [reachable]
                {:tree reachable
                 :remaining-program (apply str (drop (count (string-leaves reachable)) program))})
              reachable-trees)))
     {:remaining-program program :tree (build-empty-node :root rules)}))
-
-
-
-

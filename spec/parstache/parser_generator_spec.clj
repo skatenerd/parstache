@@ -121,10 +121,13 @@
 
 (describe "integration"
   (it "...works?"
-    (let [rules {:root {:type :juxtaposition :required-children [:a-char :b-char :repeat-root :a-char]}
+    (let [rules {:root {:type :juxtaposition :required-children [:a-char
+                                                                 :b-char
+                                                                 :repeat-root
+                                                                 :a-char]}
                  :a-char {:type :character :possible-characters ["a"]}
                  :b-char {:type :character :possible-characters ["b"]}
-                 :repeat-root {:type :repetition :repetition :root}}
+                 :repeat-root {:type :repetition :repeated-rule-name :root}}
           program "abababa"]
       (should-not (empty? (get-parse-tree rules program)))))
 
