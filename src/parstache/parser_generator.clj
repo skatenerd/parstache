@@ -7,63 +7,53 @@
 (defn update-last-element [v new-element]
   (assoc-in v [(dec (count v))] new-element))
 
-(defn add-immediate-children [intermediate-parse-tree remaining-program rules]
+(defn add-immediate-children [node remaining-program rules]
   (map
     (fn [to-add] (update-in
-                   intermediate-parse-tree
-                   [:children]
+                   node
+                   [:actual-children]
                    #(conj % to-add)))
-    (addable-children remaining-program rules intermediate-parse-tree)))
+    (addable-children remaining-program rules node)))
 
-(defn possible-new-subtrees [intermediate-parse-tree remaining-program rules]
-  (let [last-child (last (:children intermediate-parse-tree))]
+(defn possible-new-subtrees [node remaining-program rules]
+  (let [last-child (last (:actual-children node))]
     (if last-child
       (add-to-tree last-child remaining-program rules)
       [])))
 
-(defn update-last-child [intermediate-parse-tree new-child]
+(defn update-last-child [node new-child]
   (update-in
-    intermediate-parse-tree
-    [:children]
+    node
+    [:actual-children]
     #(update-last-element % new-child)))
 
-(defn with-altered-subtree [intermediate-parse-tree remaining-program rules]
-  (let [new-subtrees (possible-new-subtrees intermediate-parse-tree remaining-program rules)]
-    (map #(update-last-child intermediate-parse-tree %)
+(defn with-altered-subtree [node remaining-program rules]
+  (let [new-subtrees (possible-new-subtrees node remaining-program rules)]
+    (map #(update-last-child node %)
          new-subtrees)))
 
-(defn add-to-tree [intermediate-parse-tree remaining-program rules]
+(defn add-to-tree [node remaining-program rules]
   (let [with-immediate-adds
-        (add-immediate-children intermediate-parse-tree remaining-program rules)
+        (add-immediate-children node remaining-program rules)
         with-altered-subtree
-        (with-altered-subtree intermediate-parse-tree remaining-program rules)]
+        (with-altered-subtree node remaining-program rules)]
     (concat with-altered-subtree with-immediate-adds)))
 
 (defn addable-children [remaining-program rules node]
-  (if (map? node)
-    (let [{:keys [rule children]} node
-          last-child-closeable? (closeable? rules (last children))]
-      (if last-child-closeable?
-        (r-addable-children rule node rules remaining-program)
-        []))
+  (if (and (satisfies? Rule node) (closeable? (last (:actual-children node))))
+    (r-addable-children node rules remaining-program)
     []))
 
-(defn closeable? [rules node]
-  (if (map? node)
-    (let [{:keys [rule children]} node
-          local-answer (r-closeable? rule node)]
-      (and local-answer (recur rules (last (:children node)))))
+(defn closeable? [node]
+  (if (and node (satisfies? Rule node))
+    (r-closeable? node)
     true))
 
 (defn string-leaves [tree]
-  (filter string?  (tree-seq map? :children tree)))
-
-(defn recordify-rules [rules]
-  (into {} (map (fn [[rule-name contents]] [rule-name (build-rule-with-name rule-name rules)]) rules)))
+  (apply str (filter #(satisfies? Leaf %) (tree-seq map? :actual-children tree))))
 
 (defn get-parse-tree [rules program]
-  (let [rules (recordify-rules rules)]
-    (find-node
+  (find-node
     (fn [state]
       (empty? (:remaining-program state)));predicate
     (fn [state]
@@ -72,19 +62,8 @@
                {:tree reachable
                 :remaining-program (apply str (drop (count (string-leaves reachable)) program))})
              reachable-trees)))
-    {:remaining-program program :tree (build-empty-node :root rules)})))
+    {:remaining-program program :tree (build-empty-node :root rules)}))
 
-(defn build-rule-with-name [rule-name all-rules]
-  (let [{:keys [type children]} (get all-rules rule-name)
-        constructor (case type
-                      :juxtaposition
-                      ->Juxtaposition
-                      :character
-                      ->SingleCharacter
-                      :exclusion
-                      ->CharacterExclusion
-                      :repetition
-                      ->Repetition)]
-    (constructor rule-name children)))
+
 
 
