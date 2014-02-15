@@ -40,24 +40,23 @@
     (concat with-altered-subtree with-immediate-adds)))
 
 (defn addable-children [remaining-program rules node]
-  (if (and (satisfies? Rule node) (closeable? (last (:actual-children node))))
+  (if (and (closeable? (last (:actual-children node))))
     (r-addable-children node rules remaining-program)
     []))
 
 (defn closeable? [node]
-  (if (and node (satisfies? Rule node))
+  (if (and node)
     (r-closeable? node)
     true))
 
 (defn string-leaves [tree]
-  (apply str (filter #(satisfies? Leaf %) (tree-seq map? :actual-children tree))))
+  (apply str (filter #(not (empty? (r-atoms %))) (tree-seq map? :actual-children tree))))
 
 (defn get-parse-tree [rules program]
   (find-node
     (fn [state]
       (empty? (:remaining-program state)));predicate
     (fn [state]
-      ;(clojure.pprint/pprint state)
       (let [reachable-trees (add-to-tree (:tree state) (:remaining-program state) rules)]
         (map (fn [reachable]
                {:tree reachable
