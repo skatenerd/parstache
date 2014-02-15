@@ -1,16 +1,11 @@
 (ns parstache.parser-generator.node-types)
 
 (declare build-empty-node)
-;
-;(defn wat-closeable? [local-answer children]
-;  (and local-answer (recur (last children))))
 
 (defprotocol Rule
   (r-closeable? [this])
-  (r-addable-children [this all-rules remaining-program]))
-
-(defprotocol Leaf
-  (leaf-stuff [this]))
+  (r-addable-children [this all-rules remaining-program])
+  (r-atoms [this]))
 
 (extend-type java.lang.Character
   Rule
@@ -18,15 +13,15 @@
     true)
   (r-addable-children [this _ _]
     [])
-  Leaf
-  (leaf-stuff [this] (str this)))
+  (r-atoms [this] (str this)))
 
 (defrecord Literal [actual-children]
   Rule
   (r-closeable? [this]
     true)
   (r-addable-children [this _ _]
-    []))
+    [])
+  (r-atoms [this] []))
 
 (defrecord Juxtaposition [name actual-children required-children]
   Rule
@@ -38,7 +33,8 @@
     (let [has actual-children]
       (if (= (count required-children) (count has))
         []
-        [(build-empty-node (nth required-children (count has)) all-rules)]))))
+        [(build-empty-node (nth required-children (count has)) all-rules)])))
+  (r-atoms [this] []))
 
 (defrecord SingleCharacter [name actual-children possible-characters]
   Rule
@@ -48,7 +44,8 @@
     (let [first-program-character (str (first remaining-program))]
       (if (empty? actual-children)
         (map #(Literal. %) (filter #(= % first-program-character) possible-characters))
-        []))))
+        [])))
+  (r-atoms [this] []))
 
 (defrecord CharacterExclusion [name actual-children unpossible-characters]
   Rule
@@ -62,14 +59,17 @@
         []
         [(Literal. first-program-character)])
       []
-      ))))
+      )))
+  (r-atoms [this] []))
 
 (defrecord Repetition [name actual-children repeated-rule-name]
   Rule
   (r-closeable? [this]
     true)
   (r-addable-children [this all-rules remaining-program]
-    [(build-empty-node repeated-rule-name all-rules)]))
+    [(build-empty-node repeated-rule-name all-rules)])
+  (r-atoms [this] [])
+  )
 
 
 
