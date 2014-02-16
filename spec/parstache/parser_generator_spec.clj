@@ -145,6 +145,7 @@
                    :non-parens {:type :repetition :repeated-rule-name :non-paren}
                    }
             program "(+ 1 (* 3 4) (* 2 3))"]
-        (should-not (empty? (get-parse-tree rules program)))))
+        (should= program (string-leaves (:tree (get-parse-tree rules program))))
+        ))
 
   )
