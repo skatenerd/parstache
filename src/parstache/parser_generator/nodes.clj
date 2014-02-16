@@ -6,8 +6,7 @@
 
 (defprotocol Node
   (closeable? [this])
-  (addable-children [this all-rules remaining-program])
-  (atoms [this]))
+  (addable-children [this all-rules remaining-program]))
 
 (defn update-last-child [node new-child]
   (update-in
@@ -21,15 +20,14 @@
     [:children]
     #(conj % new-child)))
 
-(defrecord Literal [contents children]
+(defrecord Literal [atoms children]
   Node
   (closeable? [this]
     true)
   (addable-children [this _ _]
-    [])
-  (atoms [this] [contents]))
+    []))
 
-(defrecord Juxtaposition [name children required-children]
+(defrecord Juxtaposition [name children required-children atoms]
   Node
   (closeable? [this]
     (let [child-names (map :name children)
@@ -40,10 +38,9 @@
           children-satisfied (= (count required-children) (count children))]
       (if (and last-child-closeable (not children-satisfied))
         [(build-empty-node (nth required-children (count children)) all-rules)]
-        [])))
-  (atoms [this] []))
+        []))))
 
-(defrecord SingleCharacter [name children possible-characters]
+(defrecord SingleCharacter [name children possible-characters atoms]
   Node
   (closeable? [this]
     (not (empty? children)))
@@ -51,10 +48,9 @@
     (let [first-program-character (str (first remaining-program))]
       (if (empty? children)
         (map #(Literal. % []) (filter #(= % first-program-character) possible-characters))
-        [])))
-  (atoms [this] []))
+        []))))
 
-(defrecord CharacterExclusion [name children unpossible-characters]
+(defrecord CharacterExclusion [name children unpossible-characters atoms]
   Node
   (closeable? [this]
     (not (empty? children)))
@@ -64,20 +60,18 @@
     (if (empty? children)
       (if (contains? hates first-program-character)
         []
-        [(Literal. first-program-character [])])
+        [(Literal. [first-program-character] [])])
       []
-      )))
-  (atoms [this] []))
+      ))))
 
-(defrecord Repetition [name children repeated-rule-name]
+(defrecord Repetition [name children repeated-rule-name atoms]
   Node
   (closeable? [this]
     true)
   (addable-children [this all-rules remaining-program]
     (if (or (empty? children) (closeable? (last children)))
       [(build-empty-node repeated-rule-name all-rules)]
-      []))
-  (atoms [this] []))
+      [])))
 
 (defn build-empty-node [rule-name all-rules]
   (let [rule-definition (get all-rules rule-name)
@@ -90,4 +84,4 @@
                       map->CharacterExclusion
                       :repetition
                       map->Repetition)]
-    (constructor (assoc rule-definition :children [] :name rule-name))))
+    (constructor (assoc rule-definition :children [] :name rule-name :atoms []))))

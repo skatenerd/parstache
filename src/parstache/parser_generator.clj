@@ -28,7 +28,7 @@
     (concat with-altered-subtree with-immediate-adds)))
 
 (defn string-leaves [tree]
-  (apply str (mapcat atoms (tree-seq map? :children tree))))
+  (apply str (mapcat :atoms (tree-seq map? :children tree))))
 
 (defn get-parse-tree [rules program]
   (find-node
