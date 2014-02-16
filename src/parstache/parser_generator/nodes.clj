@@ -27,6 +27,12 @@
   (addable-children [this _ _]
     []))
 
+(defn addable-if-children-closeable [children condition return]
+  (let [last-child-closeable (or (empty? children) (closeable? (last children)))]
+    (if (and last-child-closeable condition)
+      (return)
+      [])))
+
 (defrecord Juxtaposition [name children required-children atoms]
   Node
   (closeable? [this]
@@ -34,11 +40,12 @@
           local-answer (= child-names required-children)]
       (and local-answer (closeable? (last children)))))
   (addable-children [this all-rules _]
-    (let [last-child-closeable (or (empty? children) (closeable? (last children)))
-          children-satisfied (= (count required-children) (count children))]
-      (if (and last-child-closeable (not children-satisfied))
-        [(build-empty-node (nth required-children (count children)) all-rules)]
-        []))))
+    (let [children-satisfied (= (count required-children) (count children))
+          build-new-node #(vector (build-empty-node (nth required-children (count children)) all-rules)) ]
+      (addable-if-children-closeable
+        children
+        (not children-satisfied)
+        build-new-node))))
 
 (defrecord SingleCharacter [name children possible-characters atoms]
   Node
@@ -46,32 +53,31 @@
     (not (empty? children)))
   (addable-children [this all-rules remaining-program]
     (let [first-program-character (str (first remaining-program))]
-      (if (empty? children)
-        (map #(Literal. % []) (filter #(= % first-program-character) possible-characters))
-        []))))
+      (addable-if-children-closeable
+        children
+        (contains? (set possible-characters) first-program-character)
+        #(vector (Literal. [first-program-character] []))))))
 
 (defrecord CharacterExclusion [name children unpossible-characters atoms]
   Node
   (closeable? [this]
     (not (empty? children)))
   (addable-children [this all-rules remaining-program]
-    (let [hates (set unpossible-characters)
-          first-program-character (str (first remaining-program))]
-    (if (empty? children)
-      (if (contains? hates first-program-character)
-        []
-        [(Literal. [first-program-character] [])])
-      []
-      ))))
+    (let [first-program-character (str (first remaining-program))]
+      (addable-if-children-closeable
+        children
+        (not (contains? (set unpossible-characters) first-program-character))
+        #(vector (Literal. [first-program-character] []))))))
 
 (defrecord Repetition [name children repeated-rule-name atoms]
   Node
   (closeable? [this]
     true)
   (addable-children [this all-rules remaining-program]
-    (if (or (empty? children) (closeable? (last children)))
-      [(build-empty-node repeated-rule-name all-rules)]
-      [])))
+    (addable-if-children-closeable
+      children
+      true
+      #(vector (build-empty-node repeated-rule-name all-rules)))))
 
 (defn build-empty-node [rule-name all-rules]
   (let [rule-definition (get all-rules rule-name)

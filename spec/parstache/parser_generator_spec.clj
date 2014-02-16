@@ -1,123 +1,118 @@
 (ns parstache.parser-generator-spec
   (:require
     [parstache.parser-generator :refer :all]
+    [parstache.parser-generator.nodes :refer :all]
     [speclj.core :refer :all]))
 
-;(describe "what can i add to a node"
-;  (it "knows about juxtaposition rules"
-;    (let [seed-rules {:root {:type :juxtaposition :children [:first :middle]}
-;                      :first {:type :character :children ["a"]}
-;                      :middle {:type :character :children ["z"]}}
-;          rules (recordify-rules seed-rules)]
-;      (should=
-;        [{:rule (get rules :middle) :children []}]
-;        (addable-children
-;          ""
-;          rules
-;          {:rule (get rules :root)
-;           :children [{:rule (get rules :first) :children ["a"]}]}))))
-;
-;  (it "knows about character rules"
-;    (let [rules {:root {:type :character :children ["a"]}}]
-;      (should=
-;        ["a"]
-;        (addable-children
-;          "a"
-;          rules
-;          {:rule (build-rule-with-name :root rules) :children []}))
-;      (should=
-;        []
-;        (addable-children
-;          "this program does not have an 'a' at the start"
-;          rules
-;          {:rule (build-rule-with-name :root rules) :children []}))
-;      (should=
-;        []
-;        (addable-children
-;          "aaaaaaa"
-;          rules
-;          {:rule (build-rule-with-name :root rules) :children ["a"]}))))
-;
-;  (it "knows about repetition rules"
-;    (let [seed-rules {:root {:type :repetition :children [:char-rule]}
-;                 :char-rule {:type :character :children ["Z"]}}
-;          rules (recordify-rules seed-rules)
-;          ]
-;      (should=
-;        [{:rule (get rules :char-rule) :children []}]
-;        (addable-children
-;          ""
-;          rules
-;          {:rule (get rules :root) :children [{:rule (get rules :char-rule) :children ["Z"]}]}))))
-;
-;  (it "knows about exclusion rules"
-;    (let [rules {:root {:type :exclusion :children ["("]}}]
-;      (should=
-;        ["z"]
-;        (addable-children
-;          "zoo"
-;          rules
-;          {:rule (build-rule-with-name :root rules) :children []}))
-;      (should=
-;        []
-;        (addable-children
-;          "(zoo"
-;          rules
-;          {:rule (build-rule-with-name :root rules) :children []}))))
-;
-;  (it "wont let you add anything to a node whose last child is not closable"
-;    (let [rules {:root {:type :repetition :children [:char-rule]}
-;                 :char-rule {:type :character :children ["Z"]}}]
-;      (should=
-;        []
-;        (addable-children
-;          "ZZZZ"
-;          rules
-;          {:rule (build-rule-with-name :root rules) :children [{:rule (build-rule-with-name :char-rule rules) :children []}]})))))
-;
-;(describe "closable?"
-;  (it "A juxtaposition is not closeable unless its stuff is all finished"
-;    (let [rules {:root {:type :juxtaposition :children [:char-rule]}
-;                 :char-rule {:type :character :children ["Z"]}}]
-;      (should (closeable?
-;              rules
-;              {:rule (build-rule-with-name :root rules) :children [{:rule (build-rule-with-name :char-rule rules) :children ["Z"]}]}))
-;    (should-not (closeable?
-;                  rules
-;                  {:rule (build-rule-with-name :root rules) :children []}))))
-;  (it "a character rule is not closeable unless it has a child"
-;    (let [rules {:root {:type :character :children ["A"]}}]
-;      (should
-;      (closeable?
-;        rules
-;        {:rule (build-rule-with-name :root rules) :children ["A"]}))
-;    (should-not
-;      (closeable?
-;        rules
-;        {:rule (build-rule-with-name :root rules) :children []}))))
-;  (it "a repetition rule is always closeable"
-;    (let [rules {:root {:type :repetition :children [:wat]}}]
-;      (should
-;        (closeable?
-;          rules
-;          {:rule (build-rule-with-name :root rules) :children []}))))
-;  (it "an exclusion rule is not closeable unless it has a child"
-;    (let [rules {:root {:type :exclusion :children ["("]}}]
-;      (should
-;        (closeable?
-;          rules
-;          {:rule (build-rule-with-name :root rules) :children ["Z"]}))
-;      (should-not
-;        (closeable?
-;          rules
-;          {:rule (build-rule-with-name :root rules) :children []}))))
-;  (it "a node is not closeable unless its last child is also closeable"
-;    (let [rules {:root {:type :juxtaposition :children [:char-rule]}
-;                 :char-rule {:type :character :children ["Z"]}}]
-;      (should-not
-;        (closeable?
-;          rules
-;          {:rule (build-rule-with-name :root rules) :children [{:rule (build-rule-with-name :char-rule rules) :children []}]})))))
+(context "juxtaposition nodes"
+  (it "lets you add the first child to a juxtaposition"
+      (let [rules {:root {:type :juxtaposition :required-children [:first :middle]}
+                        :first {:type :character :possible-characters ["a"]}
+                        :middle {:type :character :possible-characters ["z"]}}
+            node (build-empty-node :root rules)]
+        (should=
+          [(build-empty-node :first rules)]
+          (addable-children
+            node
+            rules
+            "remaining program"))))
+
+  (it "lets you add the second child to a juxtaposition"
+      (let [rules {:root {:type :juxtaposition :required-children [:first :middle]}
+                        :first {:type :character :possible-characters ["a"]}
+                        :middle {:type :character :possible-characters ["z"]}}
+            first-child-node (map->SingleCharacter {:children [(->Literal "a" [])]
+                                                    :name :first})
+            node (map->Juxtaposition {:required-children [:first :middle]
+                                      :children [first-child-node]
+                                      :name :root})]
+        (should=
+          (build-empty-node :middle rules)
+          (first (addable-children
+                   node
+                   rules
+                   "remaining program")))))
+
+  (it "does not let you add a child to juxtaposition when first child is not closeable"
+    (let [rules {:root {:type :juxtaposition :required-children [:first :middle]}
+                      :first {:type :character :possible-characters ["a"]}
+                      :middle {:type :character :possible-characters ["z"]}}
+          first-child-node (map->SingleCharacter {:children []
+                                                  :name :first})
+          node (map->Juxtaposition {:required-children [:first :middle]
+                                    :children [first-child-node]
+                                    :name :root})]
+      (should
+        (empty? (addable-children
+                  node
+                  rules
+                  "remaining program"))))))
+
+(context "character rules"
+  (it "lets you add to an empty single-character node, when the remaining program starts with right character"
+    (let [rules {:root {:type :character :possible-characters ["a" "b" "c"]}}
+          node (build-empty-node :root rules)]
+      (should=
+        [(->Literal ["a"] [])]
+        (addable-children
+          node
+          rules
+          "abcdefg"))
+      (should=
+        [(->Literal ["b"] [])]
+        (addable-children
+          node
+          rules
+          "bcdefg"))
+      (should=
+        []
+        (addable-children
+          node
+          rules
+          "zzzzzzzzzzz"))))
+
+  (it "lets you add to a character-exclusion node, when remainin program starts with right character"
+      (let [rules {:root {:type :exclusion :unpossible-characters ["a" "b" "c"]}}
+            node (build-empty-node :root rules)]
+        (should=
+          [(->Literal ["z"] [])]
+          (addable-children
+            node
+            rules
+            "zzzzzzz"))
+        (should=
+          []
+          (addable-children
+            node
+            rules
+            "aaaaaaaa")))))
+
+(context "repetition rules"
+  (it "lets you add to a repetition rule when its children are closeable"
+    (let [rules {:root {:type :repetition :repeated-rule-name :char-rule}
+                 :char-rule {:type :character :possible-characters ["Z"]}}
+          node (build-empty-node :root rules)]
+      (should=
+        parstache.parser_generator.nodes.SingleCharacter
+        (type
+          (first
+            (addable-children
+              node
+              rules
+              "ZZZZZZZZZZZ"))))))
+
+  (it "does not let you add to a repetition whose last child is unclosed"
+    (let [rules {:root {:type :repetition :repeated-rule-name :char-rule}
+                 :char-rule {:type :character :possible-characters ["Z"]}}
+          character-node (build-empty-node :char-rule rules)
+          node (map->Repetition {:children [character-node] :name :root})]
+      (should=
+        []
+        (addable-children
+          node
+          rules
+          "ZZZZZZZZZZZ")))))
+
 
 (describe "integration"
   (it "...works?"
@@ -145,7 +140,4 @@
                    :non-parens {:type :repetition :repeated-rule-name :non-paren}
                    }
             program "(+ 1 (* 3 4) (* 2 3))"]
-        (should= program (string-leaves (:tree (get-parse-tree rules program))))
-        ))
-
-  )
+        (should= program (string-leaves (:tree (get-parse-tree rules program)))))))
