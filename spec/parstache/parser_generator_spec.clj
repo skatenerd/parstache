@@ -113,6 +113,45 @@
           rules
           "ZZZZZZZZZZZ")))))
 
+(context
+  "or-rules"
+  (it
+    "lets you have both options, when children are empty"
+    (let [rules {:root {:type :or :allowed-rules [:a-char :b-char]}
+                 :a-char {:type :character :possible-characters ["a"]}
+                 :b-char {:type :character :possible-characters ["b"]}}
+          node (build-empty-node :root rules)]
+      (should=
+        [:a-char :b-char]
+        (map
+          :name
+          (addable-children
+            node
+            rules
+            "ZZZZZZZZZZZ")))))
+
+  (it
+    "doesnt let you add anything when it has a child"
+    (let [rules {:root {:type :or :allowed-rules [:a-char]}
+                 :a-char {:type :character :possible-characters ["a"]}}
+          character-node (build-empty-node :a-char rules)
+          node (build-empty-node :root rules)
+          node (update-in node [:children] #(conj % character-node))]
+      (should=
+        []
+        (addable-children
+          node
+          rules
+          "ZZZZZZZZZZZ")))
+    )
+  (it "is not closeable unless it has children"
+     (let [rules {:root {:type :or :allowed-rules [:a-char]}
+                  :a-char {:type :character :possible-characters ["a"]}}
+          character-node (build-empty-node :a-char rules)
+          empty-node (build-empty-node :root rules)
+          full-node (update-in empty-node [:children] #(conj % character-node))]
+      (should (closeable? empty-node))
+      (should-not (closeable? full-node)))))
 
 (describe "integration"
   (it "...works?"

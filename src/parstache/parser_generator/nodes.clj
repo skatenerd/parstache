@@ -79,6 +79,19 @@
       true
       #(vector (build-empty-node repeated-rule-name all-rules)))))
 
+(defrecord Or [name children allowed-rules atoms]
+  Node
+  (closeable? [this]
+    (empty? children))
+  (addable-children [this all-rules remaining-program]
+    (addable-if-children-closeable
+      children
+      true
+      (fn []
+        (map
+          #(build-empty-node % all-rules)
+          allowed-rules)))))
+
 (defn build-empty-node [rule-name all-rules]
   (let [rule-definition (get all-rules rule-name)
         constructor (case (:type rule-definition)
@@ -89,5 +102,7 @@
                       :exclusion
                       map->CharacterExclusion
                       :repetition
-                      map->Repetition)]
+                      map->Repetition
+                      :or
+                      map->Or)]
     (constructor (assoc rule-definition :children [] :name rule-name :atoms []))))
