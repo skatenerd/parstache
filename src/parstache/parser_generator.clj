@@ -6,14 +6,11 @@
 
 (defn add-immediate-children [node remaining-program rules]
   (map
-    (fn [to-add] (update-in
-                   node
-                   [:actual-children]
-                   #(conj % to-add)))
+    #(add-child node %)
     (addable-children node rules remaining-program )))
 
 (defn possible-new-subtrees [node remaining-program rules]
-  (let [last-child (last (branches node))]
+  (let [last-child (last (:children node))]
     (if last-child
       (add-to-tree last-child remaining-program rules)
       [])))
@@ -31,7 +28,7 @@
     (concat with-altered-subtree with-immediate-adds)))
 
 (defn string-leaves [tree]
-  (apply str (mapcat atoms (tree-seq map? branches tree))))
+  (apply str (mapcat atoms (tree-seq map? :children tree))))
 
 (defn get-parse-tree [rules program]
   (find-node
