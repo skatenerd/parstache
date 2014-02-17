@@ -166,17 +166,42 @@
       (should-not (empty? (get-parse-tree rules program)))))
 
   (it "does harder lisp"
-      (let [rules {:root {:type :juxtaposition :required-children [:open-paren
-                                                                   :non-parens
-                                                                   :repeat-root
-                                                                   :non-parens
-                                                                   :close-paren
-                                                                   :non-parens]}
-                   :open-paren {:type :character :possible-characters ["("]}
-                   :close-paren {:type :character :possible-characters [")"]}
-                   :repeat-root {:type :repetition :repeated-rule-name :root}
-                   :non-paren {:type :exclusion :unpossible-characters ["(" ")"]}
-                   :non-parens {:type :repetition :repeated-rule-name :non-paren}
-                   }
-            program "(+ 1 (* 3 4) (* 2 3))"]
-        (should= program (string-leaves (:tree (get-parse-tree rules program)))))))
+    (let [rules {:root {:type :juxtaposition :required-children [:open-paren
+                                                                 :non-parens
+                                                                 :repeat-root
+                                                                 :non-parens
+                                                                 :close-paren
+                                                                 :non-parens]}
+                 :open-paren {:type :character :possible-characters ["("]}
+                 :close-paren {:type :character :possible-characters [")"]}
+                 :repeat-root {:type :repetition :repeated-rule-name :root}
+                 :non-paren {:type :exclusion :unpossible-characters ["(" ")"]}
+                 :non-parens {:type :repetition :repeated-rule-name :non-paren}
+                 }
+          program "(+ 1 (* 3 4) (* 2 3))"]
+      (should= program (string-leaves (:tree (get-parse-tree rules program))))))
+
+  (it "does mustache"
+    (let [rules {:root {:type :repetition :repeated-rule-name :form}
+                 :form {:type :or :allowed-rules [:many-non-mustaches
+                                                  :substitution
+                                                  :subcontext
+                                                  :partial]}
+                 :non-mustaches {:type :repetition :repeated-rule-name :non-bracket}
+                 :many-non-mustaches {:type :juxtaposition :required-children [:non-bracket :non-mustaches]}
+                 :non-bracket {:type :exclusion :unpossible-characters ["{" "}"]}
+                 :non-pound {:type :exclusion :unpossible-characters ["#"]}
+                 :substitution {:type :juxtaposition :required-children [:double-open-stache :non-pound :non-mustaches :double-close-stache]}
+                 :double-open-stache {:type :juxtaposition :required-children [:open-stache :open-stache]}
+                 :double-close-stache {:type :juxtaposition :required-children [:close-stache :close-stache]}
+                 :open-stache {:type :character :possible-characters ["{"]}
+                 :close-stache {:type :character :possible-characters ["}"]}
+                 :subcontext {:type :juxtaposition :required-children [:start-subcontext :form :end-subcontext]}
+                 :start-subcontext {:type :juxtaposition :required-children [:double-open-stache :pound :non-mustaches :double-close-stache]}
+                 :pound {:type :character :possible-characters ["#"]};}
+                 :slash {:type :character :possible-characters ["/"]}
+                 :gator {:type :character :possible-characters [">"]}
+                 :partial {:type :juxtaposition :required-children [:double-open-stache :gator :non-mustaches :double-close-stache]}
+                 :end-subcontext {:type :juxtaposition :required-children [:double-open-stache :slash :non-mustaches :double-close-stache]}}
+          program "hi {{wut}}  {{#sup}}bro {{zzzz}}{{/sup}} {{>a_partial}}"]
+      (should= program (string-leaves (:tree (get-parse-tree rules program)))))))

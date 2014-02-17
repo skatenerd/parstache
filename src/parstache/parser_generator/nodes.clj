@@ -66,7 +66,7 @@
     (let [first-program-character (str (first remaining-program))]
       (addable-if-children-closeable
         children
-        (not (contains? (set unpossible-characters) first-program-character))
+        (and (empty? children) (not (contains? (set unpossible-characters) first-program-character)))
         #(vector (Literal. [first-program-character] []))))))
 
 (defrecord Repetition [name children repeated-rule-name atoms]
