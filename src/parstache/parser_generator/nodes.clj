@@ -33,12 +33,17 @@
       (return)
       [])))
 
+(defn- node-closeable? [local-answer children]
+  (let [last-child (last children)
+        last-child-closeable? #(if last-child (closeable? last-child) true)]
+    (and local-answer (last-child-closeable?))))
+
 (defrecord Juxtaposition [name children required-children atoms]
   Node
   (closeable? [this]
     (let [child-names (map :name children)
           local-answer (= child-names required-children)]
-      (and local-answer (closeable? (last children)))))
+      (node-closeable? local-answer children)))
   (addable-children [this all-rules remaining-program]
     (let [children-satisfied (= (count required-children) (count children))
           build-new-node #(vector (build-empty-node (nth required-children (count children)) all-rules)) ]
@@ -50,7 +55,7 @@
 (defrecord SingleCharacter [name children possible-characters atoms]
   Node
   (closeable? [this]
-    (not (empty? children)))
+    (node-closeable? (not (empty? children)) children))
   (addable-children [this all-rules remaining-program]
     (let [first-program-character (str (first remaining-program))]
       (addable-if-children-closeable
@@ -61,7 +66,7 @@
 (defrecord CharacterExclusion [name children unpossible-characters atoms]
   Node
   (closeable? [this]
-    (not (empty? children)))
+    (node-closeable? (not (empty? children)) children))
   (addable-children [this all-rules remaining-program]
     (let [first-program-character (str (first remaining-program))]
       (addable-if-children-closeable
@@ -72,7 +77,7 @@
 (defrecord Repetition [name children repeated-rule-name atoms]
   Node
   (closeable? [this]
-    true)
+    (node-closeable? true children))
   (addable-children [this all-rules remaining-program]
     (addable-if-children-closeable
       children
@@ -82,7 +87,7 @@
 (defrecord Or [name children allowed-rules atoms]
   Node
   (closeable? [this]
-    (and (not (empty? children)) (closeable? (last children))))
+    (node-closeable? (not (empty? children)) children))
   (addable-children [this all-rules remaining-program]
     (addable-if-children-closeable
       children
