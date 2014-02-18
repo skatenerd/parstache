@@ -5,15 +5,6 @@
 
 (declare render-parsed render)
 
-(def ebnf
-  "DOCUMENT := (RAW | SUBSTITUTION | SUBCONTEXT | PARTIAL)+
-  RAW := #'[^\\{\\}]+'
-  SUBSTITUTION := <'{{'> RAW <'}}'>
-  START_SUBCONTEXT := <'{{#'> RAW <'}}'>
-  END_SUBCONTEXT := <'{{/'> RAW <'}}'>
-  PARTIAL := <'{{>'> RAW <'}}'>
-  SUBCONTEXT :=  START_SUBCONTEXT DOCUMENT END_SUBCONTEXT")
-
 (def mustache-specification
   {:root {:type :repetition :repeated-rule-name :form}
    :form {:type :or :allowed-rules [:substitution
