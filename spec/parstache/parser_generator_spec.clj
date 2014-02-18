@@ -1,5 +1,6 @@
 (ns parstache.parser-generator-spec
   (:require
+    [parstache.core :refer [mustache-specification]]
     [parstache.parser-generator :refer :all]
     [parstache.parser-generator.nodes :refer :all]
     [speclj.core :refer :all]))
@@ -115,8 +116,7 @@
 
 (context
   "or-rules"
-  (it
-    "lets you have both options, when children are empty"
+  (it "lets you have both options, when children are empty"
     (let [rules {:root {:type :or :allowed-rules [:a-char :b-char]}
                  :a-char {:type :character :possible-characters ["a"]}
                  :b-char {:type :character :possible-characters ["b"]}}
@@ -130,11 +130,11 @@
             rules
             "ZZZZZZZZZZZ")))))
 
-  (it
-    "doesnt let you add anything when it has a child"
+  (it "doesnt let you add anything when it has a child"
     (let [rules {:root {:type :or :allowed-rules [:a-char]}
                  :a-char {:type :character :possible-characters ["a"]}}
-          character-node (build-empty-node :a-char rules)
+          character-node (map->SingleCharacter {:children [(->Literal "a" [])]
+                                                :name :a-char})
           node (build-empty-node :root rules)
           node (update-in node [:children] #(conj % character-node))]
       (should=
@@ -142,16 +142,17 @@
         (addable-children
           node
           rules
-          "ZZZZZZZZZZZ")))
-    )
-  (it "is not closeable unless it has children"
-     (let [rules {:root {:type :or :allowed-rules [:a-char]}
-                  :a-char {:type :character :possible-characters ["a"]}}
-          character-node (build-empty-node :a-char rules)
+          "aaaaaaaaaaaaaa"))))
+
+  (it "is not closeable unless it has closed children"
+    (let [rules {:root {:type :or :allowed-rules [:a-char]}
+                 :a-char {:type :character :possible-characters ["a"]}}
+          character-node (map->SingleCharacter {:children [(->Literal "a" [])]
+                                                :name :a-char})
           empty-node (build-empty-node :root rules)
           full-node (update-in empty-node [:children] #(conj % character-node))]
-      (should (closeable? empty-node))
-      (should-not (closeable? full-node)))))
+      (should-not (closeable? empty-node))
+      (should (closeable? full-node)))))
 
 (describe "integration"
   (it "...works?"
@@ -182,26 +183,6 @@
       (should= program (string-leaves (:tree (get-parse-tree rules program))))))
 
   (it "does mustache"
-    (let [rules {:root {:type :repetition :repeated-rule-name :form}
-                 :form {:type :or :allowed-rules [:many-non-mustaches
-                                                  :substitution
-                                                  :subcontext
-                                                  :partial]}
-                 :non-mustaches {:type :repetition :repeated-rule-name :non-bracket}
-                 :many-non-mustaches {:type :juxtaposition :required-children [:non-bracket :non-mustaches]}
-                 :non-bracket {:type :exclusion :unpossible-characters ["{" "}"]}
-                 :non-pound {:type :exclusion :unpossible-characters ["#"]}
-                 :substitution {:type :juxtaposition :required-children [:double-open-stache :non-pound :non-mustaches :double-close-stache]}
-                 :double-open-stache {:type :juxtaposition :required-children [:open-stache :open-stache]}
-                 :double-close-stache {:type :juxtaposition :required-children [:close-stache :close-stache]}
-                 :open-stache {:type :character :possible-characters ["{"]}
-                 :close-stache {:type :character :possible-characters ["}"]}
-                 :subcontext {:type :juxtaposition :required-children [:start-subcontext :form :end-subcontext]}
-                 :start-subcontext {:type :juxtaposition :required-children [:double-open-stache :pound :non-mustaches :double-close-stache]}
-                 :pound {:type :character :possible-characters ["#"]};}
-                 :slash {:type :character :possible-characters ["/"]}
-                 :gator {:type :character :possible-characters [">"]}
-                 :partial {:type :juxtaposition :required-children [:double-open-stache :gator :non-mustaches :double-close-stache]}
-                 :end-subcontext {:type :juxtaposition :required-children [:double-open-stache :slash :non-mustaches :double-close-stache]}}
-          program "hi {{wut}}  {{#sup}}bro {{zzzz}}{{/sup}} {{>a_partial}}"]
+    (let [rules mustache-specification
+          program "{{#sup}}bro {{hi}}  {{/sup}} hi {{wut}} here is {{>a_partial}}"];hi {{wut}}  {{#sup}}bro {{zzzz}}{{/sup}} {{>a_partial}}"]
       (should= program (string-leaves (:tree (get-parse-tree rules program)))))))

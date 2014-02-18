@@ -39,7 +39,7 @@
     (let [child-names (map :name children)
           local-answer (= child-names required-children)]
       (and local-answer (closeable? (last children)))))
-  (addable-children [this all-rules _]
+  (addable-children [this all-rules remaining-program]
     (let [children-satisfied (= (count required-children) (count children))
           build-new-node #(vector (build-empty-node (nth required-children (count children)) all-rules)) ]
       (addable-if-children-closeable
@@ -82,11 +82,11 @@
 (defrecord Or [name children allowed-rules atoms]
   Node
   (closeable? [this]
-    (empty? children))
+    (and (not (empty? children)) (closeable? (last children))))
   (addable-children [this all-rules remaining-program]
     (addable-if-children-closeable
       children
-      true
+      (empty? children)
       (fn []
         (map
           #(build-empty-node % all-rules)

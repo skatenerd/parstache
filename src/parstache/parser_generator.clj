@@ -25,7 +25,7 @@
         (add-immediate-children node remaining-program rules)
         with-altered-subtree
         (with-altered-subtree node remaining-program rules)]
-    (concat with-altered-subtree with-immediate-adds)))
+    (concat (reverse with-altered-subtree) with-immediate-adds)))
 
 (defn string-leaves [tree]
   (apply str (mapcat :atoms (tree-seq map? :children tree))))
