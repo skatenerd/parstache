@@ -42,16 +42,6 @@
 
 (defn homebrew-parse [document] (:tree (get-parse-tree mustache-specification document)))
 
-(defn- render-subcontext [children data partials]
-  (let [key-name (last (last (first children)))
-        body (second children)
-        subdata (get data key-name)]
-    (cond
-      (sequential? subdata)
-      (map #(render-parsed body % partials) subdata)
-      subdata
-      (render-parsed body subdata partials))))
-
 (defn- render-partial [children data partials]
   (let [partial-name (last (first children))
         partial-contents (get partials partial-name)
@@ -79,16 +69,13 @@
             without-mustaches (update-in opening-tag [:children] #(drop 2 (drop-last %)))
             context-field (string-leaves without-mustaches)
             inner-form (second (:children parsed))
-            inside-subcontext (string-leaves inner-form)]
-        "ZZZZZZZZZZZZZZ"
-        ))))
+            subdata (get data context-field)]
+        (if (sequential? subdata)
+          (mapcat #(render-parsed inner-form % partials) subdata)
+          (if subdata (render-parsed inner-form subdata partials) ""))))))
 
 (defn render
   ([document data]
    (render document data {}))
   ([document data partials]
-   (render-parsed (homebrew-parse document) data partials)
-  ;(render-parsed (parse document) data partials)
-
-
-   ))
+   (render-parsed (homebrew-parse document) data partials)))
