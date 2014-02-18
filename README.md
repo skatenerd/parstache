@@ -22,13 +22,21 @@ Will Yield:
 *  Inverted Sections
 *  Lambdas
 
-## Parser Generator
+## What's with this parser generator thing?
+It's used to generate a function which parses mustache input.  But you can give it whatever grammar you want to give it.
 
-Todo:  experiment with using a closure to encapsulate "rules" and "remaining program".  extract rule records to own namespace.  support nested rules(!!!).  stop pointing nodes at rule records, instead give them rule names.
+####Todo:  
+* support nested rules(!!!).
+* make it faster
+* write rules to parse actual EBNF input
+
+
+## WHY??
+For fun.  And Because I can.
 
 ## License
 
-Copyright © 2014 FIXME
+Copyright © 2014
 
 Distributed under the Eclipse Public License either version 1.0 or (at
 your option) any later version.
