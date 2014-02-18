@@ -1,6 +1,5 @@
 (ns parstache.core
   (:require
-    [instaparse.core :as instaparse]
     [parstache.parser-generator :refer :all]
     [clojure.walk :as walk]))
 
@@ -38,15 +37,7 @@
    :partial {:type :juxtaposition :required-children [:double-open-stache :gator :non-mustaches :double-close-stache]}
    :end-subcontext {:type :juxtaposition :required-children [:double-open-stache :slash :non-mustaches :double-close-stache]}})
 
-(def parse (instaparse/parser ebnf))
-
 (defn homebrew-parse [document] (:tree (get-parse-tree mustache-specification document)))
-
-(defn- render-partial [children data partials]
-  (let [partial-name (last (first children))
-        partial-contents (get partials partial-name)
-        parsed (parse partial-contents)]
-    (render-parsed parsed data partials)))
 
 (defn- render-parsed [parsed data partials]
   (let [node-type (:name parsed)
