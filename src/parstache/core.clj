@@ -4,7 +4,7 @@
     [parstache.parser-generator :refer :all]
     [clojure.walk :as walk]))
 
-(declare render-parsed)
+(declare render-parsed render)
 
 (def ebnf
   "DOCUMENT := (RAW | SUBSTITUTION | SUBCONTEXT | PARTIAL)+
@@ -24,8 +24,8 @@
    :non-mustaches {:type :repetition :repeated-rule-name :non-bracket}
    :many-non-mustaches {:type :juxtaposition :required-children [:non-bracket :non-mustaches]}
    :non-bracket {:type :exclusion :unpossible-characters ["{" "}"]}
-   :non-pound-slash {:type :exclusion :unpossible-characters ["#" "/"]}
-   :substitution {:type :juxtaposition :required-children [:double-open-stache :non-pound-slash :non-mustaches :double-close-stache]}
+   :non-special {:type :exclusion :unpossible-characters ["#" "/" ">"]}
+   :substitution {:type :juxtaposition :required-children [:double-open-stache :non-special :non-mustaches :double-close-stache]}
    :double-open-stache {:type :juxtaposition :required-children [:open-stache :open-stache]}
    :double-close-stache {:type :juxtaposition :required-children [:close-stache :close-stache]}
    :open-stache {:type :character :possible-characters ["{"]}
@@ -72,7 +72,10 @@
             subdata (get data context-field)]
         (if (sequential? subdata)
           (mapcat #(render-parsed inner-form % partials) subdata)
-          (if subdata (render-parsed inner-form subdata partials) ""))))))
+          (if subdata (render-parsed inner-form subdata partials) "")))
+      :partial
+      (let [partial-name (string-leaves (get (:children parsed) 2))]
+        (render (get partials partial-name) data partials)))))
 
 (defn render
   ([document data]
