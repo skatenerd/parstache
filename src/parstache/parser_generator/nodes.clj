@@ -77,7 +77,7 @@
              (not (contains? (set unpossible-characters) first-program-character)))
         #(vector (Literal. [first-program-character] []))))))
 
-(defrecord Repetition [name children repeated-rule-name atoms]
+(defrecord Repetition [name children repeated-rule atoms]
   Node
   (closeable? [this]
     (node-closeable? true children))
@@ -85,7 +85,7 @@
     (addable-if-children-closeable
       children
       true
-      #(vector (build-empty-node repeated-rule-name all-rules)))))
+      #(vector (build-empty-node repeated-rule all-rules)))))
 
 (defrecord Or [name children allowed-rules atoms]
   Node

@@ -98,7 +98,7 @@
 
 (context "repetition rules"
   (it "lets you add to a repetition rule when its children are closeable"
-    (let [rules {:root {:type :repetition :repeated-rule-name :char-rule}
+    (let [rules {:root {:type :repetition :repeated-rule :char-rule}
                  :char-rule {:type :character :possible-characters ["Z"]}}
           node (build-empty-node :root rules)]
       (should=
@@ -111,7 +111,7 @@
               "ZZZZZZZZZZZ"))))))
 
   (it "does not let you add to a repetition whose last child is unclosed"
-    (let [rules {:root {:type :repetition :repeated-rule-name :char-rule}
+    (let [rules {:root {:type :repetition :repeated-rule :char-rule}
                  :char-rule {:type :character :possible-characters ["Z"]}}
           character-node (build-empty-node :char-rule rules)
           node (map->Repetition {:children [character-node] :name :root})]
@@ -169,7 +169,7 @@
                                                                  :a-char]}
                  :a-char {:type :character :possible-characters ["a"]}
                  :b-char {:type :character :possible-characters ["b"]}
-                 :repeat-root {:type :repetition :repeated-rule-name :root}}
+                 :repeat-root {:type :repetition :repeated-rule :root}}
           program "ababaa"]
       (should-not (empty? (get-parse-tree rules program)))))
 
@@ -182,9 +182,9 @@
                                                                  :non-parens]}
                  :open-paren {:type :character :possible-characters ["("]}
                  :close-paren {:type :character :possible-characters [")"]}
-                 :repeat-root {:type :repetition :repeated-rule-name :root}
+                 :repeat-root {:type :repetition :repeated-rule :root}
                  :non-paren {:type :exclusion :unpossible-characters ["(" ")"]}
-                 :non-parens {:type :repetition :repeated-rule-name :non-paren}
+                 :non-parens {:type :repetition :repeated-rule :non-paren}
                  }
           program "(+ 1 (* 3 4) (* 2 3))"]
       (should= program (string-leaves (:tree (get-parse-tree rules program))))))
@@ -205,7 +205,7 @@
                                             {:type :character
                                              :possible-characters ["a"]}]}
 
-                 :repeat-root {:type :repetition :repeated-rule-name :root}}
+                 :repeat-root {:type :repetition :repeated-rule :root}}
           program "abababa"]
       (should-not (empty? (get-parse-tree rules program))))))
 
@@ -224,10 +224,10 @@
       (should= expected (compile-rules to-compile))))
 
   (it "one-or-more"
-    (let [to-compile {:root {:type :one-or-more :repeated-rule-name :foo}
+    (let [to-compile {:root {:type :one-or-more :repeated-rule :foo}
                       :foo {:type :character :dont :care}}
           expected {:root {:type :juxtaposition
                            :required-children [:foo
-                                               {:type :repetition :repeated-rule-name :foo}]}
+                                               {:type :repetition :repeated-rule :foo}]}
                     :foo {:type :character :dont :care}}]
       (should= expected (compile-rules to-compile)))))

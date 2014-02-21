@@ -7,13 +7,13 @@
 
 
 (def mustache-specification
-  {:root {:type :repetition :repeated-rule-name :form}
+  {:root {:type :repetition :repeated-rule :form}
    :form {:type :or :allowed-rules [:substitution
                                     :subcontext
                                     :partial
                                     :many-non-mustaches]}
-   :non-mustaches {:type :repetition :repeated-rule-name :non-bracket}
-   :many-non-mustaches {:type :one-or-more :repeated-rule-name :non-bracket}
+   :non-mustaches {:type :repetition :repeated-rule :non-bracket}
+   :many-non-mustaches {:type :one-or-more :repeated-rule :non-bracket}
    :non-bracket {:type :exclusion :unpossible-characters ["{" "}"]}
    :non-special {:type :exclusion :unpossible-characters ["#" "/" ">"]}
    :substitution {:type :juxtaposition :required-children [:open-stache :non-special :non-mustaches :close-stache]}

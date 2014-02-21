@@ -51,8 +51,8 @@
  {:required-children children :type :juxtaposition}))
 
 (defn build-one-or-more [node]
-  (let [repeated-rule-name (:repeated-rule-name node)]
-    {:type :juxtaposition :required-children [repeated-rule-name {:type :repetition :repeated-rule-name repeated-rule-name}]}))
+  (let [repeated-rule (:repeated-rule node)]
+    {:type :juxtaposition :required-children [repeated-rule {:type :repetition :repeated-rule repeated-rule}]}))
 
 (defn compile-rules [compilation-candidate]
   (postwalk
