@@ -171,7 +171,6 @@
                  :b-char {:type :character :possible-characters ["b"]}
                  :repeat-root {:type :repetition :repeated-rule-name :root}}
           program "ababaa"]
-      ;(clojure.pprint/pprint (get-parse-tree rules program))
       (should-not (empty? (get-parse-tree rules program)))))
 
   (it "does harder lisp"
@@ -196,14 +195,16 @@
       (should= program (string-leaves (:tree (get-parse-tree rules program))))))
 
 
-  (xit "supports nested rules"
+  (it "supports nested rules"
     (let [rules {:root {:type :juxtaposition
                         :required-children [{:type :character
                                              :possible-characters ["a"]}
-                                            :b-char
+                                            {:type :character
+                                             :possible-characters ["b"]}
                                             :repeat-root
-                                            :a-char]}
-                 :b-char {:type :character :possible-characters ["b"]}
+                                            {:type :character
+                                             :possible-characters ["a"]}]}
+
                  :repeat-root {:type :repetition :repeated-rule-name :root}}
           program "abababa"]
       (should-not (empty? (get-parse-tree rules program)))))
