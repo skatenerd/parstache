@@ -43,11 +43,12 @@
              reachable-trees)))
     {:remaining-program program :tree (build-empty-node :root rules)}))
 
-(defn- decompose [composition]
-  (mapv
-    (fn [character]
-      {:possible-characters [(str character)] :type :character})
-    composition))
+(defn- compile-word-node [node]
+  (let [children (mapv
+                   (fn [character]
+                     {:possible-characters [(str character)] :type :character})
+                   (:allowed node))]
+ {:required-children children :type :juxtaposition}))
 
 (defn build-one-or-more [node]
   (let [repeated-rule-name (:repeated-rule-name node)]
@@ -58,7 +59,7 @@
     (fn [node]
       (case (:type node)
         :word
-        {:required-children (decompose (:allowed node)) :type :juxtaposition}
+        (compile-word-node node)
         :one-or-more
         (build-one-or-more node)
         node))
