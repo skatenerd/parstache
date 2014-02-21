@@ -34,7 +34,7 @@
                                                              :non-mustaches
                                                              :close-stache]}})
 
-(defn homebrew-parse [document] (:tree (get-parse-tree mustache-specification document)))
+(defn parse [document] (:tree (get-parse-tree mustache-specification document)))
 
 (defn- render-parsed [parsed data partials]
   (let [node-type (:name parsed)
@@ -69,4 +69,4 @@
   ([document data]
    (render document data {}))
   ([document data partials]
-   (render-parsed (homebrew-parse document) data partials)))
+   (render-parsed (parse document) data partials)))
