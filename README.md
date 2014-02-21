@@ -25,8 +25,7 @@ Will Yield:
 ## What's with this parser generator thing?
 It's used to generate a function which parses mustache input.  But you can give it whatever grammar you want to give it.
 
-####Todo:  
-* support nested rules(!!!).
+####Todo:
 * make it faster
 * write rules to parse actual EBNF input
 
