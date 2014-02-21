@@ -2,6 +2,7 @@
   (:require
     [parstache.core :refer [mustache-specification]]
     [parstache.parser-generator :refer :all]
+    [clojure.pprint]
     [parstache.parser-generator.nodes :refer :all]
     [speclj.core :refer :all]))
 
@@ -70,7 +71,14 @@
         (addable-children
           node
           rules
-          "zzzzzzzzzzz"))))
+          "zzzzzzzzzzz"))
+      (let [full-node (assoc-in node [:children] [(->Literal ["a"] [])])]
+        (should=
+          []
+          (addable-children
+            full-node
+            rules
+            "aaaaaaaa")))))
 
   (it "lets you add to a character-exclusion node, when remainin program starts with right character"
       (let [rules {:root {:type :exclusion :unpossible-characters ["a" "b" "c"]}}
@@ -114,8 +122,7 @@
           rules
           "ZZZZZZZZZZZ")))))
 
-(context
-  "or-rules"
+(context "or-rules"
   (it "lets you have both options, when children are empty"
     (let [rules {:root {:type :or :allowed-rules [:a-char :b-char]}
                  :a-char {:type :character :possible-characters ["a"]}
@@ -163,7 +170,8 @@
                  :a-char {:type :character :possible-characters ["a"]}
                  :b-char {:type :character :possible-characters ["b"]}
                  :repeat-root {:type :repetition :repeated-rule-name :root}}
-          program "abababa"]
+          program "ababaa"]
+      ;(clojure.pprint/pprint (get-parse-tree rules program))
       (should-not (empty? (get-parse-tree rules program)))))
 
   (it "does harder lisp"
@@ -184,5 +192,22 @@
 
   (it "does mustache"
     (let [rules mustache-specification
-          program "{{#sup}}bro {{hi}}  {{/sup}} hi {{wut}} here is {{>a_partial}}"];hi {{wut}}  {{#sup}}bro {{zzzz}}{{/sup}} {{>a_partial}}"]
-      (should= program (string-leaves (:tree (get-parse-tree rules program)))))))
+          program "{{#sup}}bro {{hi}}  {{/sup}} hi {{wut}} here is {{>a_partial}}"]
+      (should= program (string-leaves (:tree (get-parse-tree rules program))))))
+
+
+  (xit "supports nested rules"
+    (let [rules {:root {:type :juxtaposition
+                        :required-children [{:type :character
+                                             :possible-characters ["a"]}
+                                            :b-char
+                                            :repeat-root
+                                            :a-char]}
+                 :b-char {:type :character :possible-characters ["b"]}
+                 :repeat-root {:type :repetition :repeated-rule-name :root}}
+          program "abababa"]
+      (should-not (empty? (get-parse-tree rules program)))))
+
+
+
+  )

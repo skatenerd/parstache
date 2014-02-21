@@ -60,7 +60,9 @@
     (let [first-program-character (str (first remaining-program))]
       (addable-if-children-closeable
         children
-        (contains? (set possible-characters) first-program-character)
+        (and
+          (empty? children)
+          (contains? (set possible-characters) first-program-character))
         #(vector (Literal. [first-program-character] []))))))
 
 (defrecord CharacterExclusion [name children unpossible-characters atoms]
@@ -71,7 +73,8 @@
     (let [first-program-character (str (first remaining-program))]
       (addable-if-children-closeable
         children
-        (and (empty? children) (not (contains? (set unpossible-characters) first-program-character)))
+        (and (empty? children)
+             (not (contains? (set unpossible-characters) first-program-character)))
         #(vector (Literal. [first-program-character] []))))))
 
 (defrecord Repetition [name children repeated-rule-name atoms]
@@ -98,7 +101,7 @@
           allowed-rules)))))
 
 (defn build-empty-node [rule-name all-rules]
-  (let [rule-definition (get all-rules rule-name)
+  (let [rule-definition (if (map? rule-name) rule-name (get all-rules rule-name))
         constructor (case (:type rule-definition)
                       :juxtaposition
                       map->Juxtaposition
