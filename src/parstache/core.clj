@@ -15,18 +15,24 @@
    :many-non-mustaches {:type :juxtaposition :required-children [:non-bracket :non-mustaches]}
    :non-bracket {:type :exclusion :unpossible-characters ["{" "}"]}
    :non-special {:type :exclusion :unpossible-characters ["#" "/" ">"]}
-   :substitution {:type :juxtaposition :required-children [:double-open-stache :non-special :non-mustaches :double-close-stache]}
-   :double-open-stache {:type :juxtaposition :required-children [:open-stache :open-stache]}
-   :double-close-stache {:type :juxtaposition :required-children [:close-stache :close-stache]}
-   :open-stache {:type :character :possible-characters ["{"]}
-   :close-stache {:type :character :possible-characters ["}"]}
+   :substitution {:type :juxtaposition :required-children [:open-stache :non-special :non-mustaches :close-stache]}
+   :open-stache {:type :juxtaposition :required-children [{:type :character :possible-characters ["{"]}
+                                                                 {:type :character :possible-characters ["{"]}]}
+   :close-stache {:type :juxtaposition :required-children [{:type :character :possible-characters ["}"]}
+                                                                  {:type :character :possible-characters ["}"]}]}
    :subcontext {:type :juxtaposition :required-children [:start-subcontext :root :end-subcontext]}
-   :start-subcontext {:type :juxtaposition :required-children [:double-open-stache :pound :non-mustaches :double-close-stache]}
-   :pound {:type :character :possible-characters ["#"]}
-   :slash {:type :character :possible-characters ["/"]}
-   :gator {:type :character :possible-characters [">"]}
-   :partial {:type :juxtaposition :required-children [:double-open-stache :gator :non-mustaches :double-close-stache]}
-   :end-subcontext {:type :juxtaposition :required-children [:double-open-stache :slash :non-mustaches :double-close-stache]}})
+   :start-subcontext {:type :juxtaposition :required-children [:open-stache
+                                                               {:type :character :possible-characters ["#"]}
+                                                               :non-mustaches
+                                                               :close-stache]}
+   :partial {:type :juxtaposition :required-children [:open-stache
+                                                      {:type :character :possible-characters [">"]}
+                                                      :non-mustaches
+                                                      :close-stache]}
+   :end-subcontext {:type :juxtaposition :required-children [:open-stache
+                                                             {:type :character :possible-characters ["/"]}
+                                                             :non-mustaches
+                                                             :close-stache]}})
 
 (defn homebrew-parse [document] (:tree (get-parse-tree mustache-specification document)))
 
