@@ -1,5 +1,6 @@
 (ns parstache.parser-generator
-  (:require [parstache.tree :refer :all]
+  (:require [clojure.walk :refer [postwalk]]
+            [parstache.tree :refer :all]
             [parstache.parser-generator.nodes :refer :all]))
 
 (declare add-to-tree)
@@ -41,3 +42,24 @@
                 :remaining-program (apply str (drop (count (string-leaves reachable)) program))})
              reachable-trees)))
     {:remaining-program program :tree (build-empty-node :root rules)}))
+
+(defn- decompose [composition]
+  (mapv
+    (fn [character]
+      {:possible-characters [(str character)] :type :character})
+    composition))
+
+(defn build-one-or-more [node]
+  (let [repeated-rule-name (:repeated-rule-name node)]
+    {:type :juxtaposition :required-children [repeated-rule-name {:type :repetition :repeated-rule-name repeated-rule-name}]}))
+
+(defn compile-rules [compilation-candidate]
+  (postwalk
+    (fn [node]
+      (case (:type node)
+        :word
+        {:required-children (decompose (:allowed node)) :type :juxtaposition}
+        :one-or-more
+        (build-one-or-more node)
+        node))
+    compilation-candidate))

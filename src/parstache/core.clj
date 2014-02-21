@@ -5,6 +5,7 @@
 
 (declare render-parsed render)
 
+
 (def mustache-specification
   {:root {:type :repetition :repeated-rule-name :form}
    :form {:type :or :allowed-rules [:substitution
@@ -12,14 +13,12 @@
                                     :partial
                                     :many-non-mustaches]}
    :non-mustaches {:type :repetition :repeated-rule-name :non-bracket}
-   :many-non-mustaches {:type :juxtaposition :required-children [:non-bracket :non-mustaches]}
+   :many-non-mustaches {:type :one-or-more :repeated-rule-name :non-bracket}
    :non-bracket {:type :exclusion :unpossible-characters ["{" "}"]}
    :non-special {:type :exclusion :unpossible-characters ["#" "/" ">"]}
    :substitution {:type :juxtaposition :required-children [:open-stache :non-special :non-mustaches :close-stache]}
-   :open-stache {:type :juxtaposition :required-children [{:type :character :possible-characters ["{"]}
-                                                                 {:type :character :possible-characters ["{"]}]}
-   :close-stache {:type :juxtaposition :required-children [{:type :character :possible-characters ["}"]}
-                                                                  {:type :character :possible-characters ["}"]}]}
+   :open-stache {:type :word :allowed "{{"}
+   :close-stache {:type :word :allowed "}}"}
    :subcontext {:type :juxtaposition :required-children [:start-subcontext :root :end-subcontext]}
    :start-subcontext {:type :juxtaposition :required-children [:open-stache
                                                                {:type :character :possible-characters ["#"]}
@@ -34,7 +33,7 @@
                                                              :non-mustaches
                                                              :close-stache]}})
 
-(defn parse [document] (:tree (get-parse-tree mustache-specification document)))
+(defn parse [document] (:tree (get-parse-tree (compile-rules mustache-specification) document)))
 
 (defn- render-parsed [parsed data partials]
   (let [node-type (:name parsed)

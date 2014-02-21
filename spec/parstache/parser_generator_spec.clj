@@ -190,7 +190,7 @@
       (should= program (string-leaves (:tree (get-parse-tree rules program))))))
 
   (it "does mustache"
-    (let [rules mustache-specification
+    (let [rules (compile-rules mustache-specification)
           program "{{#sup}}bro {{hi}}  {{/sup}} hi {{wut}} here is {{>a_partial}}"]
       (should= program (string-leaves (:tree (get-parse-tree rules program))))))
 
@@ -207,8 +207,27 @@
 
                  :repeat-root {:type :repetition :repeated-rule-name :root}}
           program "abababa"]
-      (should-not (empty? (get-parse-tree rules program)))))
+      (should-not (empty? (get-parse-tree rules program))))))
 
 
+(context "rule compiling"
+  (it "empty"
+    (let [to-compile {}
+          expected {}]
+      (should= expected (compile-rules to-compile))))
+  (it "word-rules"
+    (let [to-compile {:root {:type :word :allowed "YO"}}
+          expected {:root {:type :juxtaposition
+                           :required-children [{:type :character :possible-characters ["Y"]}
+                                               {:type :character :possible-characters ["O"]}]}}]
 
-  )
+      (should= expected (compile-rules to-compile))))
+
+  (it "one-or-more"
+    (let [to-compile {:root {:type :one-or-more :repeated-rule-name :foo}
+                      :foo {:type :character :dont :care}}
+          expected {:root {:type :juxtaposition
+                           :required-children [:foo
+                                               {:type :repetition :repeated-rule-name :foo}]}
+                    :foo {:type :character :dont :care}}]
+      (should= expected (compile-rules to-compile)))))
