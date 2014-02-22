@@ -5,43 +5,68 @@
 
 (declare add-to-tree)
 
-(defn add-immediate-children [node remaining-program rules]
+(defn add-immediate-children [node remaining-program grammar]
   (map
     #(add-child node %)
-    (addable-children node rules remaining-program )))
+    (addable-children node grammar remaining-program )))
 
-(defn possible-new-subtrees [node remaining-program rules]
+(defn possible-new-subtrees [node remaining-program grammar]
   (let [last-child (last (:children node))]
     (if last-child
-      (add-to-tree last-child remaining-program rules)
+      (add-to-tree last-child remaining-program grammar)
       [])))
 
-(defn with-altered-subtree [node remaining-program rules]
-  (let [new-subtrees (possible-new-subtrees node remaining-program rules)]
+(defn with-altered-subtree [node remaining-program grammar]
+  (let [new-subtrees (possible-new-subtrees node remaining-program grammar)]
     (map #(update-last-child node %)
          new-subtrees)))
 
-(defn add-to-tree [node remaining-program rules]
+(defn add-to-tree [node remaining-program grammar]
   (let [with-immediate-adds
-        (add-immediate-children node remaining-program rules)
+        (add-immediate-children node remaining-program grammar)
         with-altered-subtree
-        (with-altered-subtree node remaining-program rules)]
+        (with-altered-subtree node remaining-program grammar)]
     (concat (reverse with-altered-subtree) with-immediate-adds)))
 
 (defn string-leaves [tree]
   (apply str (mapcat :atoms (tree-seq map? :children tree))))
 
-(defn get-parse-tree [rules program]
+(defn get-parse-tree [grammar program]
   (find-node
     (fn [state]
       (empty? (:remaining-program state)));predicate
     (fn [state]
-      (let [reachable-trees (add-to-tree (:tree state) (:remaining-program state) rules)]
+      (let [reachable-trees (add-to-tree (:tree state) (:remaining-program state) grammar)]
         (map (fn [reachable]
                {:tree reachable
-                :remaining-program (apply str (drop (count (string-leaves reachable)) program))})
+                :remaining-program (apply str
+                                          (drop (count (string-leaves reachable))
+                                                program))})
              reachable-trees)))
-    {:remaining-program program :tree (build-empty-node :root rules)}))
+    {:remaining-program program :tree (build-empty-node :root grammar)}))
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 (defn- compile-word-node [node]
   (let [children (mapv
@@ -54,7 +79,7 @@
   (let [repeated-rule (:repeated-rule node)]
     {:type :juxtaposition :required-children [repeated-rule {:type :repetition :repeated-rule repeated-rule}]}))
 
-(defn compile-rules [compilation-candidate]
+(defn compile-grammar [compilation-candidate]
   (postwalk
     (fn [node]
       (case (:type node)

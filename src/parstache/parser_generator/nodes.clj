@@ -6,7 +6,7 @@
 
 (defprotocol Node
   (closeable? [this])
-  (addable-children [this all-rules remaining-program]))
+  (addable-children [this grammar remaining-program]))
 
 (defn update-last-child [node new-child]
   (update-in
@@ -44,9 +44,9 @@
     (let [child-names (map :name children)
           local-answer (= child-names required-children)]
       (node-closeable? local-answer children)))
-  (addable-children [this all-rules remaining-program]
+  (addable-children [this grammar remaining-program]
     (let [children-satisfied (= (count required-children) (count children))
-          build-new-node #(vector (build-empty-node (nth required-children (count children)) all-rules)) ]
+          build-new-node #(vector (build-empty-node (nth required-children (count children)) grammar)) ]
       (addable-if-children-closeable
         children
         (not children-satisfied)
@@ -56,7 +56,7 @@
   Node
   (closeable? [this]
     (node-closeable? (not (empty? children)) children))
-  (addable-children [this all-rules remaining-program]
+  (addable-children [this grammar remaining-program]
     (let [first-program-character (str (first remaining-program))]
       (addable-if-children-closeable
         children
@@ -69,7 +69,7 @@
   Node
   (closeable? [this]
     (node-closeable? (not (empty? children)) children))
-  (addable-children [this all-rules remaining-program]
+  (addable-children [this grammar remaining-program]
     (let [first-program-character (str (first remaining-program))]
       (addable-if-children-closeable
         children
@@ -81,27 +81,27 @@
   Node
   (closeable? [this]
     (node-closeable? true children))
-  (addable-children [this all-rules remaining-program]
+  (addable-children [this grammar remaining-program]
     (addable-if-children-closeable
       children
       true
-      #(vector (build-empty-node repeated-rule all-rules)))))
+      #(vector (build-empty-node repeated-rule grammar)))))
 
-(defrecord Or [name children allowed-rules atoms]
+(defrecord Or [name children allowed-grammar atoms]
   Node
   (closeable? [this]
     (node-closeable? (not (empty? children)) children))
-  (addable-children [this all-rules remaining-program]
+  (addable-children [this grammar remaining-program]
     (addable-if-children-closeable
       children
       (empty? children)
       (fn []
         (map
-          #(build-empty-node % all-rules)
-          allowed-rules)))))
+          #(build-empty-node % grammar)
+          allowed-grammar)))))
 
-(defn build-empty-node [rule-name all-rules]
-  (let [rule-definition (if (map? rule-name) rule-name (get all-rules rule-name))
+(defn build-empty-node [rule-name grammar]
+  (let [rule-definition (if (map? rule-name) rule-name (get grammar rule-name))
         constructor (case (:type rule-definition)
                       :juxtaposition
                       map->Juxtaposition

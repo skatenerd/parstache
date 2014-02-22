@@ -8,7 +8,7 @@
 
 (def mustache-specification
   {:root {:type :repetition :repeated-rule :form}
-   :form {:type :or :allowed-rules [:substitution
+   :form {:type :or :allowed-grammar [:substitution
                                     :subcontext
                                     :partial
                                     :many-non-mustaches]}
@@ -33,7 +33,7 @@
                                                              :non-mustaches
                                                              :close-stache]}})
 
-(defn parse [document] (:tree (get-parse-tree (compile-rules mustache-specification) document)))
+(defn parse [document] (:tree (get-parse-tree (compile-grammar mustache-specification) document)))
 
 (defn- render-parsed [parsed data partials]
   (let [node-type (:name parsed)
