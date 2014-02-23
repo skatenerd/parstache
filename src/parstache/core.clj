@@ -9,9 +9,9 @@
 (def mustache-specification
   {:root {:type :repetition :repeated-rule :form}
    :form {:type :or :allowed-grammar [:substitution
-                                    :subcontext
-                                    :partial
-                                    :many-non-mustaches]}
+                                      :subcontext
+                                      :partial
+                                      :many-non-mustaches]}
    :non-mustaches {:type :repetition :repeated-rule :non-bracket}
    :many-non-mustaches {:type :one-or-more :repeated-rule :non-bracket}
    :non-bracket {:type :exclusion :unpossible-characters ["{" "}"]}

@@ -1,5 +1,6 @@
 (ns parstache.parser-generator
   (:require [clojure.walk :refer [postwalk]]
+            clojure.pprint
             [parstache.tree :refer :all]
             [parstache.parser-generator.nodes :refer :all]))
 
@@ -44,29 +45,6 @@
                                                 program))})
              reachable-trees)))
     {:remaining-program program :tree (build-empty-node :root grammar)}))
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 (defn- compile-word-node [node]
   (let [children (mapv

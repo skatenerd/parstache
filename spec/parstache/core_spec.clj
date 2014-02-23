@@ -45,5 +45,3 @@
     (should=
       "yo, do you want to hear about my kid?  sweet!  his name is joe"
       (render "yo, do you want to hear about my kid?  sweet!  {{#kid}}{{>kidpartial}}{{/kid}}" {"kid" {"name" "joe"}} {:kidpartial "his name is {{name}}"}))))
-
-
