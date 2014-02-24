@@ -15,10 +15,10 @@
 (describe "best-first"
   (it "finds the first matching node, greedily"
     (let [point-graph {[0 0] #{[0 5] [1 9]}
-                       [0 5] #{[0 99]}
-                       [1 9] #{[1 11]}}]
+                       [0 5] #{[0 11]}
+                       [1 5] #{[0 99]}}]
       (should=
-        [1 11]
+        [0 11]
         (best-first
           [0 0]
           #(- 10 (second %))
@@ -27,9 +27,9 @@
           #(get point-graph %)))))
 
   (it "falls back to a less-greedy guy if its the only way to get there"
-    (let [point-graph {[0 0] #{[0 5] [1 9]}
-                       [0 5] #{[0 99]}
-                       [1 9] #{[1 11]}}]
+    (let [point-graph {[0 0] #{[0 5] [1 5]}
+                       [0 5] #{[0 11]}
+                       [1 5] #{[0 99]}}]
       (should=
         [0 99]
         (best-first

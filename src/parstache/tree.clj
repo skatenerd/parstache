@@ -1,4 +1,6 @@
-(ns parstache.tree)
+(ns parstache.tree
+  (:require
+    clojure.pprint))
 
 (defn find-node [predicate get-children tree]
   (if (predicate tree)
@@ -37,9 +39,9 @@
           (= node-1 node-2)
           0
           (= node-1 better)
-          1
+          -1
           :else
-          -1)))))
+          1)))))
 
 (defn best-first-private [frontier heuristic cost stopping-criteria get-neighbors]
   (let [best-frontier-choice (first frontier)]
