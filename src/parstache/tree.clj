@@ -15,3 +15,49 @@
       clojure.set/union
       new-finds
       (map #(find-all predicate get-children %) (get-children tree)))))
+
+(defn- new-frontier [frontier best-frontier-choice get-neighbors heuristic cost]
+  (let [best-removed (disj frontier best-frontier-choice)
+        to-add (map (fn [neighbor] {:node neighbor
+                                    :cost (cost neighbor)
+                                    :heuristic (heuristic neighbor)})
+                    (get-neighbors (:node best-frontier-choice)))]
+    (if (empty? to-add)
+      best-removed
+      (apply conj best-removed to-add))))
+
+(def empty-frontier
+  (sorted-set-by
+    (fn [node-1 node-2]
+      (let [better (min-key
+                     #(+ (:cost %) (:heuristic %))
+                     node-1
+                     node-2)]
+        (cond
+          (= node-1 node-2)
+          0
+          (= node-1 better)
+          1
+          :else
+          -1)))))
+
+(defn best-first-private [frontier heuristic cost stopping-criteria get-neighbors]
+  (let [best-frontier-choice (first frontier)]
+    (if (stopping-criteria (:node best-frontier-choice))
+      (:node best-frontier-choice)
+      (recur
+        (new-frontier frontier best-frontier-choice get-neighbors heuristic cost)
+        heuristic
+        cost
+        stopping-criteria
+        get-neighbors))))
+
+(defn best-first [start-node heuristic cost stopping-criteria get-neighbors]
+  (best-first-private
+    (conj empty-frontier {:node start-node
+                          :cost (cost start-node)
+                          :heuristic (heuristic start-node)})
+    heuristic
+    cost
+    stopping-criteria
+    get-neighbors))
