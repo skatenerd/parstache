@@ -32,12 +32,12 @@
 (describe "integration"
   (it "parses simple recursive grammar"
     (let [grammar {:root {:type :juxtaposition :required-children [:a-char
-                                                                 :b-char
-                                                                 :repeat-root
-                                                                 :a-char]}
-                 :a-char {:type :character :possible-characters ["a"]}
-                 :b-char {:type :character :possible-characters ["b"]}
-                 :repeat-root {:type :repetition :repeated-rule :root}}
+                                                                   :b-char
+                                                                   :repeat-root
+                                                                   :a-char]}
+                   :a-char {:type :character :possible-characters ["a"]}
+                   :b-char {:type :character :possible-characters ["b"]}
+                   :repeat-root {:type :repetition :repeated-rule :root}}
           program "ababaa"]
       (should-not (empty? (get-parse-tree grammar program)))))
 
@@ -54,12 +54,12 @@
                  :non-paren {:type :exclusion :unpossible-characters ["(" ")"]}
                  :non-parens {:type :repetition :repeated-rule :non-paren}
                  }
-          program "(+ 1 (* 3 4) (* 2 3))"]
+          program "(+ 1 2 (* 3 4) (* 2 3))"]
       (should= program (string-leaves (:tree (get-parse-tree grammar program))))))
 
   (it "does mustache"
     (let [grammar (compile-grammar mustache-specification)
-          program "{{#sup}}bro {{hi}}  {{/sup}} hi {{wut}} here is {{>a_partial}}"]
+          program "bro {{#foo}}{{hi}}{{/foo}}"]
       (should= program (string-leaves (:tree (get-parse-tree grammar program))))))
 
 

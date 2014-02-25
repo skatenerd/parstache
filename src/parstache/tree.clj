@@ -28,23 +28,14 @@
       best-removed
       (apply conj best-removed to-add))))
 
-(def empty-frontier
-  (sorted-set-by
-    (fn [node-1 node-2]
-      (let [better (min-key
-                     #(+ (:cost %) (:heuristic %))
-                     node-1
-                     node-2)]
-        (cond
-          (= node-1 node-2)
-          0
-          (= node-1 better)
-          -1
-          :else
-          1)))))
+(defn best-choice [frontier]
+  (let [answer (apply min-key #(+ (:cost %) (:heuristic %)) frontier)]
+    answer))
+
+(def empty-frontier #{})
 
 (defn best-first-private [frontier heuristic cost stopping-criteria get-neighbors]
-  (let [best-frontier-choice (first frontier)]
+  (let [best-frontier-choice (best-choice frontier)]
     (if (stopping-criteria (:node best-frontier-choice))
       (:node best-frontier-choice)
       (recur

@@ -38,7 +38,7 @@
    :non-quote {:type :exclusion :unpossible-characters ["\"" "'"]}
    :character {:type :character :possible-characters characters}
    :terminal {:type :juxtaposition :required-children [:quotation
-                                                       {:type :one-or-more :repeated-rule :non-quote}
+                                                       {:type :one-or-more :repeated-rule :character}
                                                        :quotation]}
    :option-rule {:type :juxtaposition :required-children [(character-rule "[") :rhs (character-rule "]")]}
    :repetition-rule {:type :juxtaposition :required-children [(character-rule "{") :rhs (character-rule "}")]}

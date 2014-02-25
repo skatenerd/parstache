@@ -35,10 +35,14 @@
 (defn node-count [tree]
   (count (tree-seq map? :children tree)))
 
+(defn square [x]
+  (* x x))
+
 (defn get-parse-tree [grammar program]
   (best-first
     {:remaining-program program :tree (build-empty-node :root grammar)}
-    #(count (:remaining-program %))
+    ;not an admissible heuristic :-)
+    #(square (count (:remaining-program %)))
     #(node-count (:tree %))
     (fn [state]
       (empty? (:remaining-program state)))
