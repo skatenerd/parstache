@@ -32,16 +32,10 @@
 (defn string-leaves [tree]
   (apply str (mapcat :atoms (tree-seq map? :children tree))))
 
-(defn node-count [tree]
-  (count (tree-seq map? :children tree)))
-
 (defn get-parse-tree [grammar program]
-  (best-first
-    {:remaining-program program :tree (build-empty-node :root grammar)}
-    #(count (:remaining-program %))
-    #(node-count (:tree %))
+  (find-node
     (fn [state]
-      (empty? (:remaining-program state)))
+      (empty? (:remaining-program state)));predicate
     (fn [state]
       (let [reachable-trees (add-to-tree (:tree state) (:remaining-program state) grammar)]
         (map (fn [reachable]
@@ -49,7 +43,8 @@
                 :remaining-program (apply str
                                           (drop (count (string-leaves reachable))
                                                 program))})
-             reachable-trees)))))
+             reachable-trees)))
+    {:remaining-program program :tree (build-empty-node :root grammar)}))
 
 (defn- compile-word-node [node]
   (let [children (mapv
