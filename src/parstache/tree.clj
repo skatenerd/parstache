@@ -29,10 +29,17 @@
       (apply conj best-removed to-add))))
 
 (defn best-choice [frontier]
-  (let [answer (apply min-key #(+ (:cost %) (:heuristic %)) frontier)]
-    answer))
+  (first frontier))
 
-(def empty-frontier #{})
+(def empty-frontier (sorted-set-by (fn [element-1 element-2]
+                                     (let [[total-cost-1 total-cost-2] (map #(+ (:cost %) (:heuristic %)) [element-1 element-2])]
+                                       (cond
+                                         (= (:node element-1) (:node element-2))
+                                         0
+                                         (> total-cost-1 total-cost-2)
+                                         1
+                                         :else
+                                         -1)))))
 
 (defn best-first-private [frontier heuristic cost stopping-criteria get-neighbors]
   (let [best-frontier-choice (best-choice frontier)]
