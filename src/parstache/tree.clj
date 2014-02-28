@@ -2,22 +2,6 @@
   (:require
     clojure.pprint))
 
-(defn find-node [predicate get-children tree]
-  (if (predicate tree)
-    tree
-    (some
-      #(find-node predicate get-children %)
-      (get-children tree))))
-
-(defn find-all [predicate get-children tree]
-  (let [new-finds (if (predicate tree)
-                    #{tree}
-                    #{})]
-    (reduce
-      clojure.set/union
-      new-finds
-      (map #(find-all predicate get-children %) (get-children tree)))))
-
 (defn- new-frontier [frontier best-frontier-choice get-neighbors heuristic cost]
   (let [best-removed (disj frontier best-frontier-choice)
         to-add (map (fn [neighbor] {:node neighbor
