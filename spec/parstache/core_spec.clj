@@ -27,9 +27,10 @@
     (should=
       "immediate families are:  laura: logan katie linda: rutledge walter "
       (render "immediate families are:  {{#parents}}{{name}}: {{#children}}{{name}} {{/children}}{{/parents}}" {"parents" [{"name" "laura"
-                                                                                                                      "children" [{"name" "logan"} {"name" "katie"}]}
-                                                                                                                     {"name" "linda"
-                                                                                                                      "children" [{"name" "rutledge"} {"name" "walter"}]}]})))
+                                                                                                                            "children" [{"name" "logan"} {"name" "katie"}]}
+                                                                                                                           {"name" "linda"
+                                                                                                                            "children" [{"name" "rutledge"} {"name" "walter"}]}]})))
+
   (it "makes fake conditionals, thereby implementing logic in the view, so mustache is really basically pointless"
     (should=
       "i have a son, jeremy"

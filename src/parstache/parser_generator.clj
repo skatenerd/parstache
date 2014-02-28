@@ -39,7 +39,7 @@
   (* x x))
 
 (defn get-parse-tree [grammar program]
-  (best-first
+  (parallel-best-first
     {:remaining-program program :tree (build-empty-node :root grammar)}
     ;not an admissible heuristic :-)
     #(square (count (:remaining-program %)))
