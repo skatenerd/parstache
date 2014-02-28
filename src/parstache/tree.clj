@@ -67,14 +67,15 @@
 (defn sleep-on [the-atom]
   (if @the-atom
     @the-atom
-    (recur the-atom)))
+    (do (Thread/sleep 10)
+        (recur the-atom))))
 
 (defn parallel-best-first [start-node heuristic cost stopping-criteria get-neighbors]
   (let [answer (atom nil)
         queue (java.util.concurrent.PriorityBlockingQueue. 2222 compare-states)
-        _ (.offer queue {:node start-node
-                         :cost (cost start-node)
-                         :heuristic (heuristic start-node)})
+        added-initial (.offer queue {:node start-node
+                                     :cost (cost start-node)
+                                     :heuristic (heuristic start-node)})
         num-threads 2
         requests (repeat num-threads (fn [] (consume answer queue heuristic cost stopping-criteria get-neighbors)))
         pool (Executors/newFixedThreadPool num-threads)]
