@@ -64,11 +64,17 @@
         (if (not @answer)
           (recur answer queue heuristic cost stopping-criteria get-neighbors))))))
 
-(defn sleep-on [the-atom]
-  (if @the-atom
+(defn sleep-on
+  ([the-atom time-limit] (sleep-on the-atom time-limit 0))
+  ([the-atom time-limit total-elapsed]
+  (cond
     @the-atom
+    @the-atom
+    (> total-elapsed time-limit)
+    {:fail :fail}
+    :else
     (do (Thread/sleep 10)
-        (recur the-atom))))
+        (recur the-atom time-limit (+ total-elapsed 10))))))
 
 (defn parallel-best-first [start-node heuristic cost stopping-criteria get-neighbors]
   (let [answer (atom nil)
@@ -81,4 +87,4 @@
         pool (Executors/newFixedThreadPool num-threads)]
     (doseq [request requests]
       (.submit pool request))
-    (:node (sleep-on answer))))
+    (:node (sleep-on answer 10000))))
